@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import { getURL } from "../helpers";
+import { getURL } from "@/utils/helpers";
 import { AccountData } from "@/types/profiles";
 import { cookies } from "next/headers";
 import { PENDING_USER } from "@/constants/cookies";
