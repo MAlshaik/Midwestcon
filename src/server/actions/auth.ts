@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getURL } from "../helpers";
 import { AccountData } from "@/types/profiles";
-import { getRoles } from "../db/queries/roles";
 import { cookies } from "next/headers";
 import { PENDING_USER } from "@/constants/cookies";
 

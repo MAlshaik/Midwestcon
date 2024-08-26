@@ -59,9 +59,9 @@ export default function RegisterForm() {
     }
 
     return (
-        <Card className="flex flex-col bg-background mx-auto min-w-[400px] min-h-[450px] max-w-sm">
+        <Card className="flex flex-col bg-background mx-auto border-none max-w-sm">
         <CardHeader>
-            <CardTitle className="text-2xl text-center">Register</CardTitle>
+            <CardTitle className="text-2xl text-center"></CardTitle>
             <CardDescription className="text-m flex flex-col gap-4">
             <Button 
             variant="secondary" 
@@ -79,6 +79,7 @@ export default function RegisterForm() {
             </Button>
             </CardDescription>
         </CardHeader>
+        {/*}
         <div className="flex flex-row justify-center text-center items-center gap-4">
             <p className="w-1/5">Or</p>
         </div>
@@ -120,6 +121,7 @@ export default function RegisterForm() {
             </Link>
             </div>
         </CardContent>
+        {*/}
         </Card>
     )
 }
