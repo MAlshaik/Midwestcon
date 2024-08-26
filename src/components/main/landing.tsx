@@ -1,6 +1,7 @@
 "use client"
 import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
+import { logout } from "@/server/actions/auth";
 
 export function Landing({ userName } : { userName: string }) {
     const router = useRouter();
@@ -15,7 +16,10 @@ export function Landing({ userName } : { userName: string }) {
           ) : (
           <>
             <h1 className="text-4xl font-bold">Welcome {userName}</h1>
-            <Button onClick={() => router.push('/dashboard')}>Dashboard</Button>
+            <div className="flex gap-2">
+              <Button onClick={() => router.push('/dashboard')}>Dashboard</Button>
+              <Button onClick={() => logout()}>Logout</Button>
+            </div>
           </>
           )}
 
