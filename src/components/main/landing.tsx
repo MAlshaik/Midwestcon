@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { getScenes } from "@/server/actions/scene";
 import { AddSceneDialog } from "./addSceneDialog";
 import Link from 'next/link';
+import ImageClassifier from "../ui/imageClassifier";
 
 interface Scene {
   id: string;

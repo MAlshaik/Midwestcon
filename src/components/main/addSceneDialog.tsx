@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createScene } from "@/server/actions/scene";
+import ImageClassifier from "@/components/ui/imageClassifier"
 
 export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
   const [title, setTitle] = useState("");
@@ -70,7 +71,8 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
             value={date}
             onChange={(e) => setDate(e.target.value)}
             required
-          />
+          /> 
+          <ImageClassifier /> 
           <Input
             type="file"
             accept="image/*"
