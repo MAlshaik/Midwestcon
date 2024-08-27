@@ -1,45 +1,36 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import { logout } from "@/server/actions/auth";
+import { getScenes } from "@/server/actions/scene";
+import { AddSceneDialog } from "./addSceneDialog";
+
+interface Scene {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  date: string;
+}
 
 export function Landing({ userName }: { userName: string }) {
   const router = useRouter();
-  const [prompt, setPrompt] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [result, setResult] = useState<string | null>(null);
-  const [type, setType] = useState<"text" | "image">("text");
+  const [scenes, setScenes] = useState<Scene[]>([]);
 
-  const handlePromptSubmit = async () => {
-    if (!prompt && !file) return;
-
+  const fetchScenes = async () => {
     try {
-      let body;
-      if (type === "text") {
-        body = JSON.stringify({ prompt, type });
-      } else if (type === "image" && file) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("prompt", prompt);
-        formData.append("type", type);
-        body = formData;
-      }
-
-      const response = await fetch('/openai', {
-        method: 'POST',
-        headers: type === "text" ? { 'Content-Type': 'application/json' } : undefined,
-        body,
-      });
-
-      const data = await response.json();
-      setResult(data.result || data.imageUrl || "No result returned");
+      const fetchedScenes = await getScenes();
+      setScenes(fetchedScenes);
     } catch (error) {
-      console.error("Error fetching data from OpenAI API:", error);
-      setResult("An error occurred. Please try again.");
+      console.error("Error fetching scenes:", error);
     }
   };
+
+  useEffect(() => {
+    fetchScenes();
+  }, []);
 
   return (
     <main className="flex flex-col justify-center items-center">
@@ -50,46 +41,27 @@ export function Landing({ userName }: { userName: string }) {
           ) : (
             <>
               <h1 className="text-4xl font-bold">Welcome {userName}</h1>
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-8">
                 <Button onClick={() => router.push('/dashboard')}>Dashboard</Button>
                 <Button onClick={() => logout()}>Logout</Button>
               </div>
 
-              <div className="mt-8 w-full max-w-md">
-                <div className="flex gap-4 mb-4">
-                  <Button onClick={() => setType("text")} className={type === "text" ? "bg-blue-500 text-white" : ""}>Text</Button>
-                  <Button onClick={() => setType("image")} className={type === "image" ? "bg-blue-500 text-white" : ""}>Image</Button>
+              <div className="w-full mb-8">
+                <AddSceneDialog onSceneAdded={fetchScenes} />
+              </div>
+
+              <div className="w-full">
+                <h2 className="text-2xl font-bold mb-4">Your Scenes</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {scenes.map((scene) => (
+                    <div key={scene.id} className="border rounded p-4">
+                      <img src={scene.imageUrl} alt={scene.title} className="w-full h-48 object-cover mb-2" />
+                      <h3 className="text-xl font-bold">{scene.title}</h3>
+                      <p>{scene.description}</p>
+                      <p className="text-sm text-gray-500 mt-2">Date: {new Date(scene.date).toLocaleDateString()}</p>
+                    </div>
+                  ))}
                 </div>
-
-                {type === "text" ? (
-                  <textarea
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    className="w-full p-2 border rounded"
-                    placeholder="Submit your crime evidence here..."
-                  />
-                ) : (
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-                    className="w-full p-2 border rounded"
-                  />
-                )}
-                
-                <Button onClick={handlePromptSubmit} className="mt-2 w-full">
-                  Submit Evidence
-                </Button>
-
-                {result && (
-                  <div className="mt-4 p-4 border rounded bg-gray-100">
-                    {type === "text" ? (
-                      <p className="whitespace-pre-wrap">{result}</p>
-                    ) : (
-                      <img src={result} alt="Generated Evidence" className="w-full h-auto" />
-                    )}
-                  </div>
-                )}
               </div>
             </>
           )}
@@ -98,75 +70,3 @@ export function Landing({ userName }: { userName: string }) {
     </main>
   );
 }
-
-
-// "use client";
-
-// import { useState } from "react";
-// import { useRouter } from "next/navigation";
-// import { Button } from "../ui/button";
-// import { logout } from "@/server/actions/auth";
-
-// export function Landing({ userName }: { userName: string }) {
-//   const router = useRouter();
-//   const [prompt, setPrompt] = useState("");
-//   const [result, setResult] = useState<string | null>(null);
-
-//   const handlePromptSubmit = async () => {
-//     if (!prompt) return;
-
-//     try {
-//       const response = await fetch('/api/openai', {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({ prompt }),
-//       });
-
-//       const data = await response.json();
-//       setResult(data.result || "No result returned");
-//     } catch (error) {
-//       console.error("Error fetching data from OpenAI API:", error);
-//       setResult("An error occurred. Please try again.");
-//     }
-//   };
-
-//   return (
-//     <main className="flex flex-col justify-center items-center">
-//       <div className="w-screen max-w-[1024px] px-4 py-16">
-//         <div className="py-28 flex flex-col items-center justify-center">
-//           {!userName ? (
-//             <Button onClick={() => router.push('/auth/register')}>Login</Button>
-//           ) : (
-//             <>
-//               <h1 className="text-4xl font-bold">Welcome {userName}</h1>
-//               <div className="flex gap-2">
-//                 <Button onClick={() => router.push('/dashboard')}>Dashboard</Button>
-//                 <Button onClick={() => logout()}>Logout</Button>
-//               </div>
-
-//               <div className="mt-8 w-full max-w-md">
-//                 <textarea
-//                   value={prompt}
-//                   onChange={(e) => setPrompt(e.target.value)}
-//                   className="w-full p-2 border rounded"
-//                   placeholder="Submit your crime evidence here..."
-//                 />
-//                 <Button onClick={handlePromptSubmit} className="mt-2 w-full">
-//                   Submit Evidence
-//                 </Button>
-//                 {result && (
-//                   <div className="mt-4 p-4 border rounded bg-gray-100">
-//                     <p className="whitespace-pre-wrap">{result}</p>
-//                   </div>
-//                 )}
-//               </div>
-//             </>
-//           )}
-//         </div>
-//       </div>
-//     </main>
-//   );
-// }
-

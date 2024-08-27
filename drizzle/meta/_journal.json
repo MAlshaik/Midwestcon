@@ -8,6 +8,27 @@
       "when": 1724641693439,
       "tag": "0000_aspiring_alex_power",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1724726012040,
+      "tag": "0001_overconfident_mandrill",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1724726438208,
+      "tag": "0002_yielding_quicksilver",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1724726568517,
+      "tag": "0003_harsh_warstar",
+      "breakpoints": true
     }
   ]
 }
