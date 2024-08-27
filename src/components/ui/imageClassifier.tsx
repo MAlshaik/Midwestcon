@@ -64,7 +64,7 @@ export default function ImageClassifier() {
         <img
           src={image}
           alt="An image to classify"
-          className="mb-8 w-full object-contain"
+          className="mb-8 max-w-xs max-h-60 object-contain"
         />
       ) : null}
 
@@ -85,7 +85,7 @@ export default function ImageClassifier() {
         />
 
         <p className="py-8 text-slate-800">
-          {submitted && !response ? "Ai examination of crime scene evidence loading..." : response}
+          {submitted && !response ? "AI examination of crime scene evidence loading..." : response}
         </p>
 
         <div className="flex flex-row">

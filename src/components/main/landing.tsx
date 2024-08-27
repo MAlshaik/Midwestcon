@@ -6,6 +6,7 @@ import { Button } from "../ui/button";
 import { logout } from "@/server/actions/auth";
 import { getScenes } from "@/server/actions/scene";
 import { AddSceneDialog } from "./addSceneDialog";
+import ImageClassifier from "../ui/imageClassifier";
 
 interface Scene {
   id: string;
@@ -45,7 +46,7 @@ export function Landing({ userName }: { userName: string }) {
                 <Button onClick={() => router.push('/dashboard')}>Dashboard</Button>
                 <Button onClick={() => logout()}>Logout</Button>
               </div>
-
+              <ImageClassifier />
               <div className="w-full mb-8">
                 <AddSceneDialog onSceneAdded={fetchScenes} />
               </div>
