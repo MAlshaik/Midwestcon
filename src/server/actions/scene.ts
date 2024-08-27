@@ -75,15 +75,14 @@ export async function getScenes() {
     }
 
     // Fetch scenes for the current user
-    const userScenes = await db.query.users.findFirst({
-      where: eq(users.id, user.id),
-      with: {
-        scenes: true,
-      },
+    const userScenes = await db.query.scenes.findMany({
+      where: eq(scenes.userId, user.id),
+      orderBy: (scenes, { desc }) => [desc(scenes.createdAt)],
     });
 
-    return userScenes?.scenes || [];
+    return userScenes;
   } catch (error: any) {
-    throw new Error(error.message);
+    console.error('Error in getScenes:', error);
+    throw new Error(error.message || 'An error occurred while fetching scenes');
   }
 }

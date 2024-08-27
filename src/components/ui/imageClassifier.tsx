@@ -12,7 +12,6 @@ export default function ImageClassifier() {
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitted(true);
-
     const formData = new FormData();
     formData.append("file", file as File);
 
@@ -24,16 +23,16 @@ export default function ImageClassifier() {
       const decoder = new TextDecoder("utf-8");
       let content = "";
 
-      return reader?.read().then(function processText({ done, value }) {
+      function processText({ done, value }: ReadableStreamReadResult<Uint8Array>): Promise<void> | void {
         if (done) {
           setResponse(cleanResponse(content));
           return;
         }
-
         content += decoder.decode(value, { stream: true });
+        return reader?.read().then(processText);
+      }
 
-        return reader.read().then(processText);
-      });
+      return reader?.read().then(processText);
     });
   };
 
@@ -60,34 +59,32 @@ export default function ImageClassifier() {
 
   return (
     <div className="max-w-4xl">
-      {image ? (
+      {image && (
         <img
           src={image}
           alt="An image to classify"
           className="mb-8 max-w-xs max-h-60 object-contain"
         />
-      ) : null}
-
+      )}
       <form onSubmit={onSubmit}>
         <input
           key={inputKey}
           type="file"
           accept="image/jpeg"
           onChange={(e) => {
-            if (e.target.files?.length) {
-              setFile(e.target?.files[0]);
-              setImage(URL.createObjectURL(e.target?.files[0]));
+            const files = e.target.files;
+            if (files?.length) {
+              setFile(files[0]);
+              setImage(URL.createObjectURL(files[0]));
             } else {
               setFile(null);
               setImage(null);
             }
           }}
         />
-
         <p className="py-8 text-slate-800">
           {submitted && !response ? "AI examination of crime scene evidence loading..." : response}
         </p>
-
         <div className="flex flex-row">
           <button
             className={`${

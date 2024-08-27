@@ -1,19 +1,18 @@
-// src/components/main/landing.tsx
-
 'use client';
 
 import { useState, useEffect } from "react";
 import { getScenes } from "@/server/actions/scene";
 import { AddSceneDialog } from "./addSceneDialog";
 import Link from 'next/link';
-import ImageClassifier from "../ui/imageClassifier";
 
 interface Scene {
   id: string;
   title: string;
-  description: string;
-  imageUrl: string;
-  date: string;
+  description: string | null;
+  imageUrl: string | null;
+  date: string | null;
+  userId: string;
+  createdAt: Date | null;
 }
 
 export function Landing({ userName }: { userName: string | undefined }) {
@@ -52,11 +51,17 @@ export function Landing({ userName }: { userName: string | undefined }) {
           {scenes.map((scene) => (
             <Link href={`/scene/${scene.id}`} key={scene.id}>
               <div className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform duration-200 ease-in-out hover:scale-105">
-                <img src={scene.imageUrl} alt={scene.title} className="w-full h-48 object-cover" />
+                {scene.imageUrl && (
+                  <img src={scene.imageUrl} alt={scene.title} className="w-full h-48 object-cover" />
+                )}
                 <div className="p-4">
                   <h3 className="text-xl font-semibold mb-2">{scene.title}</h3>
-                  <p className="text-gray-600 mb-2 line-clamp-2">{scene.description}</p>
-                  <p className="text-sm text-gray-500">Date: {new Date(scene.date).toLocaleDateString()}</p>
+                  {scene.description && (
+                    <p className="text-gray-600 mb-2 line-clamp-2">{scene.description}</p>
+                  )}
+                  {scene.date && (
+                    <p className="text-sm text-gray-500">Date: {new Date(scene.date).toLocaleDateString()}</p>
+                  )}
                 </div>
               </div>
             </Link>
