@@ -143,12 +143,14 @@ export default config;
     "lint": "next lint"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-icons": "^1.3.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.45.2",
     "@t3-oss/env-nextjs": "^0.11.1",
     "again": "^0.0.1",
+    "axios": "^1.7.5",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.33.0",
@@ -400,6 +402,38 @@ This is a file of the type: SVG Image
 
 This is a file of the type: SVG Image
 
+# drizzle/0003_harsh_warstar.sql
+
+```sql
+ALTER TABLE "midwestcon_scenes" ALTER COLUMN "date" DROP NOT NULL;
+```
+
+# drizzle/0002_yielding_quicksilver.sql
+
+```sql
+ALTER TABLE "midwestcon_scenes" ADD COLUMN "date" date NOT NULL;
+```
+
+# drizzle/0001_overconfident_mandrill.sql
+
+```sql
+CREATE TABLE IF NOT EXISTS "midwestcon_scenes" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"title" text NOT NULL,
+	"description" text,
+	"image_url" text,
+	"created_at" timestamp DEFAULT now(),
+	"user_id" uuid NOT NULL
+);
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "midwestcon_scenes" ADD CONSTRAINT "midwestcon_scenes_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+```
+
 # drizzle/0000_aspiring_alex_power.sql
 
 ```sql
@@ -586,50 +620,6 @@ export function cn(...inputs: ClassValue[]) {
 
 ```
 
-# src/constants/urls.ts
-
-```ts
-export const AUTH_URLS = [
-    '/auth/login',
-    '/auth/register',
-    '/auth/confirm-email',
-]
-
-```
-
-# src/constants/cookies.ts
-
-```ts
-export const PENDING_USER = 'pendingUser';
-export const CREATED_PROFILE = 'createdProfile';
-export const REFERRER = 'referrer';
-export const INVITE_CODE = 'invite_code';
-
-
-```
-
-# src/helpers/metaDataChecker.ts
-
-```ts
-import { User } from "@supabase/supabase-js";
-
-export function isProfileComplete(user: User) {
-    return (
-        user.user_metadata &&
-        user.user_metadata.memberType &&
-        user.user_metadata.fullName
-    );
-}
-
-export function isUserConfirmed(user: User | undefined) {
-    return (
-        user &&
-        user.user_metadata &&
-        user.user_metadata.confirmed
-    );
-}
-```
-
 # src/app/page.tsx
 
 ```tsx
@@ -762,6 +752,50 @@ export default function RootLayout({
 
 This is a binary file of the type: Binary
 
+# src/helpers/metaDataChecker.ts
+
+```ts
+import { User } from "@supabase/supabase-js";
+
+export function isProfileComplete(user: User) {
+    return (
+        user.user_metadata &&
+        user.user_metadata.memberType &&
+        user.user_metadata.fullName
+    );
+}
+
+export function isUserConfirmed(user: User | undefined) {
+    return (
+        user &&
+        user.user_metadata &&
+        user.user_metadata.confirmed
+    );
+}
+```
+
+# src/constants/urls.ts
+
+```ts
+export const AUTH_URLS = [
+    '/auth/login',
+    '/auth/register',
+    '/auth/confirm-email',
+]
+
+```
+
+# src/constants/cookies.ts
+
+```ts
+export const PENDING_USER = 'pendingUser';
+export const CREATED_PROFILE = 'createdProfile';
+export const REFERRER = 'referrer';
+export const INVITE_CODE = 'invite_code';
+
+
+```
+
 # drizzle/meta/_journal.json
 
 ```json
@@ -775,8 +809,377 @@ This is a binary file of the type: Binary
       "when": 1724641693439,
       "tag": "0000_aspiring_alex_power",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1724726012040,
+      "tag": "0001_overconfident_mandrill",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1724726438208,
+      "tag": "0002_yielding_quicksilver",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1724726568517,
+      "tag": "0003_harsh_warstar",
+      "breakpoints": true
     }
   ]
+}
+```
+
+# drizzle/meta/0003_snapshot.json
+
+```json
+{
+  "id": "ebcc0b16-c587-48e4-9834-b09f6bfa8730",
+  "prevId": "4104f806-52e0-4dbd-93e9-5fd8f8cb93f7",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.midwestcon_scenes": {
+      "name": "midwestcon_scenes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "midwestcon_scenes_user_id_users_id_fk": {
+          "name": "midwestcon_scenes_user_id_users_id_fk",
+          "tableFrom": "midwestcon_scenes",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "auth.users": {
+      "name": "users",
+      "schema": "auth",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_user_meta_data": {
+          "name": "raw_user_meta_data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
+```
+
+# drizzle/meta/0002_snapshot.json
+
+```json
+{
+  "id": "4104f806-52e0-4dbd-93e9-5fd8f8cb93f7",
+  "prevId": "b851e608-ea4f-4b03-9ac3-6ca444a91d8f",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.midwestcon_scenes": {
+      "name": "midwestcon_scenes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "midwestcon_scenes_user_id_users_id_fk": {
+          "name": "midwestcon_scenes_user_id_users_id_fk",
+          "tableFrom": "midwestcon_scenes",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "auth.users": {
+      "name": "users",
+      "schema": "auth",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_user_meta_data": {
+          "name": "raw_user_meta_data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
+```
+
+# drizzle/meta/0001_snapshot.json
+
+```json
+{
+  "id": "b851e608-ea4f-4b03-9ac3-6ca444a91d8f",
+  "prevId": "4c930a43-c08a-4ea3-b5ed-1b3292acea68",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.midwestcon_scenes": {
+      "name": "midwestcon_scenes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "midwestcon_scenes_user_id_users_id_fk": {
+          "name": "midwestcon_scenes_user_id_users_id_fk",
+          "tableFrom": "midwestcon_scenes",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "auth.users": {
+      "name": "users",
+      "schema": "auth",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_user_meta_data": {
+          "name": "raw_user_meta_data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
 }
 ```
 
@@ -837,9 +1240,12 @@ import {
   uuid,
   pgSchema,
   varchar,
-  jsonb
+  jsonb,
+  text,
+  timestamp,
+  date,
 } from "drizzle-orm/pg-core";
-
+import { relations } from "drizzle-orm";
 
 export const createTable = pgTableCreator((name) => `midwestcon_${name}`);
 
@@ -851,6 +1257,26 @@ export const users = authSchema.table("users", {
   raw_user_meta_data: jsonb("raw_user_meta_data").notNull(),
 });
 
+export const userRelations = relations(users, ({ many }) => ({
+  scenes: many(scenes),
+}));
+
+export const scenes = createTable("scenes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  date: date("date"), // Make this nullable
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+});
+
+export const sceneRelations = relations(scenes, ({ one }) => ({
+  user: one(users, {
+    fields: [scenes.userId],
+    references: [users.id],
+  }),
+}));
 
 ```
 
@@ -875,194 +1301,6 @@ const conn = globalForDb.conn ?? postgres(env.DATABASE_URL);
 if (env.NODE_ENV !== "production") globalForDb.conn = conn;
 
 export const db = drizzle(conn, { schema });
-
-```
-
-# src/server/actions/auth.ts
-
-```ts
-"use server";
-
-import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
-import { getURL } from "@/utils/helpers";
-import { AccountData } from "@/types/profiles";
-import { cookies } from "next/headers";
-import { PENDING_USER } from "@/constants/cookies";
-
-/**
- * Logs a user in
- * @param email the email of the user
- * @param password the password of the user
- * returns null if successful, or an error message if not
- */
-export async function login(email: string, password: string): Promise<string | null> {
-  const supabase = createClient();
-  
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-  return error ? error.message : null;
-}
-
-
-/**
- * Registers a user
- * @param email the email of the user
- * @param password the password of the user
- * @returns null if successful, or an error message if not
- */
-export async function register(email: string, password: string) : Promise<string | null> {
-    const supabase = createClient();
-
-    const userData = {
-      email,
-      password
-    };
-
-    const { data, error } = await supabase.auth.signUp(userData);
-
-    if (error) {
-      return error.message;
-    }
-
-    await setPendingUser(email);
-  
-    return null;
-}
-
-export async function setPendingUser(email: string) : Promise<void> {
-  cookies().set(PENDING_USER, email, { 
-    httpOnly: true, 
-    secure: true, 
-    sameSite: 'strict',
-    maxAge: 3600
-  })
-}
-
-export async function getPendingUser() : Promise<string | undefined> {
-  return cookies().get(PENDING_USER)?.value;
-}
-
-export async function deletePendingUser() : Promise<void> {
-  cookies().delete(PENDING_USER);
-}
-
-/**
- * Logs a user out
- */
-export async function logout() {
-    const supabase = createClient();
-  
-    const { error } = await supabase.auth.signOut();
-  
-    if (error) {
-      redirect('/error?message=' + error.message);
-    }
-
-    redirect('/');
-}
-
-/**
- * Completes a user's account
- */
-export async function completeAccount(data: AccountData) {
-    const supabase = createClient();
-    
-    if (!data.firstName || !data.lastName) {
-        return 'Please enter your first and last name';
-    }
-
-    const {error} = await supabase.auth.updateUser({
-      data: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        fullName: `${data.firstName} ${data.lastName}`,
-      }
-    });
-    if (error) {
-        return error.message;
-    }
-
-    return null;
-}
-
-
-/**
- * Updates a user's profile
- * @param data The updated user data
- * @returns null if successful, or an error message if not
- */
-export async function updateProfile(data: Partial<AccountData>): Promise<string | null> {
-    const supabase = createClient();
-    
-    const { error } = await supabase.auth.updateUser({
-        data: {
-            firstName: data.firstName,
-            lastName: data.lastName,
-            fullName: data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : undefined,
-        }
-    });
-
-    if (error) {
-        return error.message;
-    }
-    return null;
-}
-
-/**
- * Logs in a user with Google
- * @returns redirects to the home page if successful, and back to login page if not
- */
-export async function loginWithGoogle(
-) : Promise<void> {
-  const supabase = createClient();
-
-  const redirectUrl = getURL('/auth/callback');
-
-  console.log("auth url: ", redirectUrl)
-  console.log('ahahahaha')
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: redirectUrl,
-    },
-  })
-
-  if (error) {
-    redirect('/login?message=' + error.message);
-  }
-
-  redirect(data.url)
-}
-
-/**
- * Confirms a user's email with OTP
- * @param email email of the user
- * @param otp otp of the user
- * @returns redirects to the home page if successful, and back to login page if not
- */
-export async function confirmEmail(
-  email: string,
-  otp: string
-) : Promise<void> {
-  const supabase = createClient();
-
-  const { error } = await supabase.auth.verifyOtp({
-    email,
-    token: otp,
-    type: 'signup',
-  });
-
-  if (error) {
-    redirect('/confirm?message=' + error.message);
-  }
-
-  await deletePendingUser();
-
-  redirect('/additional-info');
-}
-
 
 ```
 
@@ -1440,6 +1678,134 @@ export { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator }
 
 ```
 
+# src/components/ui/dialog.tsx
+
+```tsx
+"use client"
+
+import * as React from "react"
+import * as DialogPrimitive from "@radix-ui/react-dialog"
+import { X } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+const Dialog = DialogPrimitive.Root
+
+const DialogTrigger = DialogPrimitive.Trigger
+
+const DialogPortal = DialogPrimitive.Portal
+
+const DialogClose = DialogPrimitive.Close
+
+const DialogOverlay = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    className={cn(
+      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      className
+    )}
+    {...props}
+  />
+))
+DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
+
+const DialogContent = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+        <X className="h-4 w-4" />
+        <span className="sr-only">Close</span>
+      </DialogPrimitive.Close>
+    </DialogPrimitive.Content>
+  </DialogPortal>
+))
+DialogContent.displayName = DialogPrimitive.Content.displayName
+
+const DialogHeader = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      "flex flex-col space-y-1.5 text-center sm:text-left",
+      className
+    )}
+    {...props}
+  />
+)
+DialogHeader.displayName = "DialogHeader"
+
+const DialogFooter = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      className
+    )}
+    {...props}
+  />
+)
+DialogFooter.displayName = "DialogFooter"
+
+const DialogTitle = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn(
+      "text-lg font-semibold leading-none tracking-tight",
+      className
+    )}
+    {...props}
+  />
+))
+DialogTitle.displayName = DialogPrimitive.Title.displayName
+
+const DialogDescription = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Description
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
+DialogDescription.displayName = DialogPrimitive.Description.displayName
+
+export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogClose,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+}
+
+```
+
 # src/components/ui/card.tsx
 
 ```tsx
@@ -1587,6 +1953,296 @@ export { Button, buttonVariants }
 
 ```
 
+# src/server/actions/scene.ts
+
+```ts
+'use server'
+
+import { createClient } from '@/utils/supabase/server';
+import { db } from '@/server/db';
+import { scenes, users } from '@/server/db/schema';
+import { eq, sql } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
+
+export async function createScene(formData: FormData) {
+  const supabase = createClient();
+  const title = formData.get('title') as string;
+  const description = formData.get('description') as string;
+  const dateStr = formData.get('date') as string;
+  const file = formData.get('file') as File;
+
+  if (!title || !file) {
+    throw new Error('Title and file are required');
+  }
+
+  // Parse the date string into a Date object
+  const date = dateStr ? new Date(dateStr) : new Date();
+
+  // Format the date as an ISO string (YYYY-MM-DD)
+  const formattedDate = date.toISOString().split('T')[0];
+
+  try {
+    // Get the current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Upload file to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase
+      .storage
+      .from('scene-images')
+      .upload(`${Date.now()}_${file.name}`, file);
+
+    if (uploadError) {
+      throw new Error(uploadError.message);
+    }
+
+    // Get public URL of the uploaded file
+    const { data: { publicUrl } } = supabase
+      .storage
+      .from('scene-images')
+      .getPublicUrl(uploadData.path);
+
+    // Create new scene in the database
+    const [newScene] = await db.insert(scenes).values({
+      title,
+      description,
+      imageUrl: publicUrl,
+      userId: user.id,
+      date: sql`${formattedDate}::date`, // Use SQL template literal to ensure proper date formatting
+    }).returning();
+
+    revalidatePath('/');
+    return newScene;
+  } catch (error: any) {
+    console.error('Error in createScene:', error);
+    throw new Error(error.message || 'An error occurred while creating the scene');
+  }
+}
+
+export async function getScenes() {
+  const supabase = createClient();
+
+  try {
+    // Get the current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Fetch scenes for the current user
+    const userScenes = await db.query.users.findFirst({
+      where: eq(users.id, user.id),
+      with: {
+        scenes: true,
+      },
+    });
+
+    return userScenes?.scenes || [];
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
+}
+
+```
+
+# src/server/actions/auth.ts
+
+```ts
+"use server";
+
+import { redirect } from "next/navigation";
+import { createClient } from "@/utils/supabase/server";
+import { getURL } from "@/utils/helpers";
+import { AccountData } from "@/types/profiles";
+import { cookies } from "next/headers";
+import { PENDING_USER } from "@/constants/cookies";
+
+/**
+ * Logs a user in
+ * @param email the email of the user
+ * @param password the password of the user
+ * returns null if successful, or an error message if not
+ */
+export async function login(email: string, password: string): Promise<string | null> {
+  const supabase = createClient();
+  
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  return error ? error.message : null;
+}
+
+
+/**
+ * Registers a user
+ * @param email the email of the user
+ * @param password the password of the user
+ * @returns null if successful, or an error message if not
+ */
+export async function register(email: string, password: string) : Promise<string | null> {
+    const supabase = createClient();
+
+    const userData = {
+      email,
+      password
+    };
+
+    const { data, error } = await supabase.auth.signUp(userData);
+
+    if (error) {
+      return error.message;
+    }
+
+    await setPendingUser(email);
+  
+    return null;
+}
+
+export async function setPendingUser(email: string) : Promise<void> {
+  cookies().set(PENDING_USER, email, { 
+    httpOnly: true, 
+    secure: true, 
+    sameSite: 'strict',
+    maxAge: 3600
+  })
+}
+
+export async function getPendingUser() : Promise<string | undefined> {
+  return cookies().get(PENDING_USER)?.value;
+}
+
+export async function deletePendingUser() : Promise<void> {
+  cookies().delete(PENDING_USER);
+}
+
+/**
+ * Logs a user out
+ */
+export async function logout() {
+    const supabase = createClient();
+  
+    const { error } = await supabase.auth.signOut();
+  
+    if (error) {
+      redirect('/error?message=' + error.message);
+    }
+
+    redirect('/');
+}
+
+/**
+ * Completes a user's account
+ */
+export async function completeAccount(data: AccountData) {
+    const supabase = createClient();
+    
+    if (!data.firstName || !data.lastName) {
+        return 'Please enter your first and last name';
+    }
+
+    const {error} = await supabase.auth.updateUser({
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        fullName: `${data.firstName} ${data.lastName}`,
+      }
+    });
+    if (error) {
+        return error.message;
+    }
+
+    return null;
+}
+
+
+/**
+ * Updates a user's profile
+ * @param data The updated user data
+ * @returns null if successful, or an error message if not
+ */
+export async function updateProfile(data: Partial<AccountData>): Promise<string | null> {
+    const supabase = createClient();
+    
+    const { error } = await supabase.auth.updateUser({
+        data: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            fullName: data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : undefined,
+        }
+    });
+
+    if (error) {
+        return error.message;
+    }
+    return null;
+}
+
+/**
+ * Logs in a user with Google
+ * @returns redirects to the home page if successful, and back to login page if not
+ */
+export async function loginWithGoogle(
+) : Promise<void> {
+  const supabase = createClient();
+
+  const redirectUrl = getURL('/auth/callback');
+
+  console.log("auth url: ", redirectUrl)
+  console.log('ahahahaha')
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: redirectUrl,
+    },
+  })
+
+  if (error) {
+    redirect('/login?message=' + error.message);
+  }
+
+  redirect(data.url)
+}
+
+/**
+ * Confirms a user's email with OTP
+ * @param email email of the user
+ * @param otp otp of the user
+ * @returns redirects to the home page if successful, and back to login page if not
+ */
+export async function confirmEmail(
+  email: string,
+  otp: string
+) : Promise<void> {
+  const supabase = createClient();
+
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token: otp,
+    type: 'signup',
+  });
+
+  if (error) {
+    redirect('/confirm?message=' + error.message);
+  }
+
+  await deletePendingUser();
+
+  redirect('/additional-info');
+}
+
+
+```
+
+# src/app/auth/default.tsx
+
+```tsx
+export default function AuthDefault() {
+    return null;
+}
+```
+
 # src/app/openai/route.ts
 
 ```ts
@@ -1645,59 +2301,42 @@ export async function POST(req: NextRequest) {
 
 ```
 
-# src/app/auth/default.tsx
-
-```tsx
-export default function AuthDefault() {
-    return null;
-}
-```
-
 # src/components/main/landing.tsx
 
 ```tsx
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "../ui/button";
 import { logout } from "@/server/actions/auth";
+import { getScenes } from "@/server/actions/scene";
+import { AddSceneDialog } from "./addSceneDialog";
+
+interface Scene {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  date: string;
+}
 
 export function Landing({ userName }: { userName: string }) {
   const router = useRouter();
-  const [prompt, setPrompt] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [result, setResult] = useState<string | null>(null);
-  const [type, setType] = useState<"text" | "image">("text");
+  const [scenes, setScenes] = useState<Scene[]>([]);
 
-  const handlePromptSubmit = async () => {
-    if (!prompt && !file) return;
-
+  const fetchScenes = async () => {
     try {
-      let body;
-      if (type === "text") {
-        body = JSON.stringify({ prompt, type });
-      } else if (type === "image" && file) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("prompt", prompt);
-        formData.append("type", type);
-        body = formData;
-      }
-
-      const response = await fetch('/openai', {
-        method: 'POST',
-        headers: type === "text" ? { 'Content-Type': 'application/json' } : undefined,
-        body,
-      });
-
-      const data = await response.json();
-      setResult(data.result || data.imageUrl || "No result returned");
+      const fetchedScenes = await getScenes();
+      setScenes(fetchedScenes);
     } catch (error) {
-      console.error("Error fetching data from OpenAI API:", error);
-      setResult("An error occurred. Please try again.");
+      console.error("Error fetching scenes:", error);
     }
   };
+
+  useEffect(() => {
+    fetchScenes();
+  }, []);
 
   return (
     <main className="flex flex-col justify-center items-center">
@@ -1708,46 +2347,27 @@ export function Landing({ userName }: { userName: string }) {
           ) : (
             <>
               <h1 className="text-4xl font-bold">Welcome {userName}</h1>
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-8">
                 <Button onClick={() => router.push('/dashboard')}>Dashboard</Button>
                 <Button onClick={() => logout()}>Logout</Button>
               </div>
 
-              <div className="mt-8 w-full max-w-md">
-                <div className="flex gap-4 mb-4">
-                  <Button onClick={() => setType("text")} className={type === "text" ? "bg-blue-500 text-white" : ""}>Text</Button>
-                  <Button onClick={() => setType("image")} className={type === "image" ? "bg-blue-500 text-white" : ""}>Image</Button>
+              <div className="w-full mb-8">
+                <AddSceneDialog onSceneAdded={fetchScenes} />
+              </div>
+
+              <div className="w-full">
+                <h2 className="text-2xl font-bold mb-4">Your Scenes</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {scenes.map((scene) => (
+                    <div key={scene.id} className="border rounded p-4">
+                      <img src={scene.imageUrl} alt={scene.title} className="w-full h-48 object-cover mb-2" />
+                      <h3 className="text-xl font-bold">{scene.title}</h3>
+                      <p>{scene.description}</p>
+                      <p className="text-sm text-gray-500 mt-2">Date: {new Date(scene.date).toLocaleDateString()}</p>
+                    </div>
+                  ))}
                 </div>
-
-                {type === "text" ? (
-                  <textarea
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    className="w-full p-2 border rounded"
-                    placeholder="Submit your crime evidence here..."
-                  />
-                ) : (
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-                    className="w-full p-2 border rounded"
-                  />
-                )}
-                
-                <Button onClick={handlePromptSubmit} className="mt-2 w-full">
-                  Submit Evidence
-                </Button>
-
-                {result && (
-                  <div className="mt-4 p-4 border rounded bg-gray-100">
-                    {type === "text" ? (
-                      <p className="whitespace-pre-wrap">{result}</p>
-                    ) : (
-                      <img src={result} alt="Generated Evidence" className="w-full h-auto" />
-                    )}
-                  </div>
-                )}
               </div>
             </>
           )}
@@ -1757,77 +2377,91 @@ export function Landing({ userName }: { userName: string }) {
   );
 }
 
+```
 
-// "use client";
+# src/components/main/addSceneDialog.tsx
 
-// import { useState } from "react";
-// import { useRouter } from "next/navigation";
-// import { Button } from "../ui/button";
-// import { logout } from "@/server/actions/auth";
+```tsx
+import React, { useState } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { createScene } from "@/server/actions/scene";
 
-// export function Landing({ userName }: { userName: string }) {
-//   const router = useRouter();
-//   const [prompt, setPrompt] = useState("");
-//   const [result, setResult] = useState<string | null>(null);
+export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [date, setDate] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [open, setOpen] = useState(false);
 
-//   const handlePromptSubmit = async () => {
-//     if (!prompt) return;
+  const handleSceneSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !file || !date) return;
 
-//     try {
-//       const response = await fetch('/api/openai', {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({ prompt }),
-//       });
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('date', date);
+    formData.append('file', file);
 
-//       const data = await response.json();
-//       setResult(data.result || "No result returned");
-//     } catch (error) {
-//       console.error("Error fetching data from OpenAI API:", error);
-//       setResult("An error occurred. Please try again.");
-//     }
-//   };
+    try {
+      await createScene(formData);
+      setTitle("");
+      setDescription("");
+      setDate("");
+      setFile(null);
+      setOpen(false);
+      onSceneAdded();
+    } catch (error) {
+      console.error("Error creating scene:", error);
+    }
+  };
 
-//   return (
-//     <main className="flex flex-col justify-center items-center">
-//       <div className="w-screen max-w-[1024px] px-4 py-16">
-//         <div className="py-28 flex flex-col items-center justify-center">
-//           {!userName ? (
-//             <Button onClick={() => router.push('/auth/register')}>Login</Button>
-//           ) : (
-//             <>
-//               <h1 className="text-4xl font-bold">Welcome {userName}</h1>
-//               <div className="flex gap-2">
-//                 <Button onClick={() => router.push('/dashboard')}>Dashboard</Button>
-//                 <Button onClick={() => logout()}>Logout</Button>
-//               </div>
-
-//               <div className="mt-8 w-full max-w-md">
-//                 <textarea
-//                   value={prompt}
-//                   onChange={(e) => setPrompt(e.target.value)}
-//                   className="w-full p-2 border rounded"
-//                   placeholder="Submit your crime evidence here..."
-//                 />
-//                 <Button onClick={handlePromptSubmit} className="mt-2 w-full">
-//                   Submit Evidence
-//                 </Button>
-//                 {result && (
-//                   <div className="mt-4 p-4 border rounded bg-gray-100">
-//                     <p className="whitespace-pre-wrap">{result}</p>
-//                   </div>
-//                 )}
-//               </div>
-//             </>
-//           )}
-//         </div>
-//       </div>
-//     </main>
-//   );
-// }
-
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>Add New Scene</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Add New Scene</DialogTitle>
+          <DialogDescription>
+            Create a new scene by filling out the details below.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSceneSubmit} className="grid gap-4 py-4">
+          <Input
+            type="text"
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+          <Input
+            type="text"
+            placeholder="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+          <Input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+          />
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+            required
+          />
+          <Button type="submit">Create Scene</Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 ```
 

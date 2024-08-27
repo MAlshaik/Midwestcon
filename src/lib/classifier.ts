@@ -1,3 +1,4 @@
+
 import { OpenAI } from "openai";
 
 import { OpenAIStream } from "ai";
@@ -40,7 +41,7 @@ export const classifyImage = async (file: File) => {
 
             type: "text",
 
-            text: "Describe this image as if you were David Attenborough. Provide as much detail as possible.",
+            text: "Describe this image as if you were trying to find evidence for a crime scene. very serious, concise, and straightforward tone",
 
           },
 

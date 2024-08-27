@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
   const [date, setDate] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   const handleSceneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,13 +24,16 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
     formData.append('file', file);
 
     try {
-      await createScene(formData);
+      const newScene = await createScene(formData);
       setTitle("");
       setDescription("");
       setDate("");
       setFile(null);
       setOpen(false);
       onSceneAdded();
+      
+      // Navigate to the new scene page
+      router.push(`/scene/${newScene.id}`);
     } catch (error) {
       console.error("Error creating scene:", error);
     }

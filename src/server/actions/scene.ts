@@ -63,6 +63,7 @@ export async function createScene(formData: FormData) {
   }
 }
 
+
 export async function getScenes() {
   const supabase = createClient();
 

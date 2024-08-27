@@ -20,8 +20,18 @@ export const users = authSchema.table("users", {
   raw_user_meta_data: jsonb("raw_user_meta_data").notNull(),
 });
 
-export const userRelations = relations(users, ({ many }) => ({
+export const userProfiles = createTable("user_profiles", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  veChainAddress: varchar("vechain_address", { length: 42 }),
+});
+
+export const userRelations = relations(users, ({ many, one }) => ({
   scenes: many(scenes),
+  profile: one(userProfiles, {
+    fields: [users.id],
+    references: [userProfiles.userId],
+  }),
 }));
 
 export const scenes = createTable("scenes", {
@@ -30,7 +40,7 @@ export const scenes = createTable("scenes", {
   description: text("description"),
   imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
-  date: date("date"), // Make this nullable
+  date: date("date"),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
 });
 

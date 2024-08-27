@@ -126,6 +126,39 @@ export async function updateProfile(data: Partial<AccountData>): Promise<string 
     return null;
 }
 
+
+export async function linkVeChainWallet(userId: string, address: string): Promise<string | null> {
+  const supabase = createClient();
+
+  const { error } = await supabase
+    .from('user_profiles')
+    .upsert({ user_id: userId, vechain_address: address }, { onConflict: 'user_id' });
+
+  if (error) {
+    console.error('Error linking VeChain address:', error);
+    return error.message;
+  }
+
+  return null;
+}
+
+export async function getVeChainAddress(userId: string): Promise<string | null> {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .select('vechain_address')
+    .eq('user_id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching VeChain address:', error);
+    return null;
+  }
+
+  return data?.vechain_address || null;
+}
+
 /**
  * Logs in a user with Google
  * @returns redirects to the home page if successful, and back to login page if not

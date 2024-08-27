@@ -1,8 +1,9 @@
+// src/app/auth/register/registerForm.tsx
+
 "use client";
 
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
-
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -13,11 +14,9 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-
-
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { register, loginWithGoogle } from "@/server/actions/auth";
+import { useState, useEffect } from "react";
+import { register, loginWithGoogle, getVeChainAddress } from "@/server/actions/auth";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
 
@@ -25,61 +24,83 @@ export default function RegisterForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
+    const [user, setUser] = useState<any>(null);
+    const [veChainAddress, setVeChainAddress] = useState<string | null>(null);
 
     const router = useRouter();
-    
+    const supabase = createClient();
+
+    useEffect(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+                if (session) {
+                    setUser(session.user);
+                    const address = await getVeChainAddress(session.user.id);
+                    setVeChainAddress(address);
+                } else {
+                    setUser(null);
+                    setVeChainAddress(null);
+                }
+            }
+        );
+
+        return () => subscription.unsubscribe();
+    }, []);
+
     const handleSubmit = async () => {
         const res = await register(email, password);
         setMessage(res || ''); 
         if (res) {
             toast.error(res, {
-            duration: 4000, 
-            position: 'bottom-right', 
-            style: {
-                border: '2px solid #333',
-                color: '#fff',
-                backgroundColor: '#333',
-            },
+                duration: 4000, 
+                position: 'bottom-right', 
+                style: {
+                    border: '2px solid #333',
+                    color: '#fff',
+                    backgroundColor: '#333',
+                },
             });
         } else {
             console.log("registered successfully")
             toast.success('Registered successfully', {
-            duration: 4000, 
-            position: 'bottom-right', 
-            style: {
-                border: '2px solid #333',
-                color: '#fff',
-                backgroundColor: '#333',
-            }, 
+                duration: 4000, 
+                position: 'bottom-right', 
+                style: {
+                    border: '2px solid #333',
+                    color: '#fff',
+                    backgroundColor: '#333',
+                }, 
             });
-
-            router.push('/');
+            router.push('/connect-wallet');
         }
+    }
 
+    if (user && !veChainAddress) {
+        router.push('/connect-wallet');
+        return null;
     }
 
     return (
         <Card className="flex flex-col bg-background mx-auto border-none max-w-sm">
-        <CardHeader>
-            <CardTitle className="text-2xl text-center"></CardTitle>
-            <CardDescription className="text-m flex flex-col gap-4">
-            <Button 
-            variant="secondary" 
-            className="w-full gap-3"
-            onClick={() => loginWithGoogle()}
-            >
-                <Image
-                src={'/google.svg'}
-                alt="Google"
-                width={20}
-                height={20}
-                >
-                </Image>
-                Register with Google
-            </Button>
-            </CardDescription>
-        </CardHeader>
-        {/*}
+            <CardHeader>
+                <CardTitle className="text-2xl text-center"></CardTitle>
+                <CardDescription className="text-m flex flex-col gap-4">
+                    <Button 
+                        variant="secondary" 
+                        className="w-full gap-3"
+                        onClick={() => loginWithGoogle()}
+                    >
+                        <Image
+                            src={'/google.svg'}
+                            alt="Google"
+                            width={20}
+                            height={20}
+                        />
+                        Register with Google
+                    </Button>
+                </CardDescription>
+            </CardHeader>
+            {/*}
         <div className="flex flex-row justify-center text-center items-center gap-4">
             <p className="w-1/5">Or</p>
         </div>
