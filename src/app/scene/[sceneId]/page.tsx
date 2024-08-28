@@ -4,23 +4,8 @@ import { Navbar } from "@/components/main/navbar";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { getSceneDetails } from "@/server/actions/scene";
 
-async function getSceneDetails(sceneId: string) {
-  const supabase = createClient();
-  
-  const { data, error } = await supabase
-    .from('midwestcon_scenes')
-    .select('*')
-    .eq('id', sceneId)
-    .single();
-
-  if (error) {
-    console.error("Error fetching scene:", error);
-    return null;
-  }
-
-  return data;
-}
 
 export default async function SceneDetail({ params }: { params: { sceneId: string } }) {
   const scene = await getSceneDetails(params.sceneId);

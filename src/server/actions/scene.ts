@@ -86,3 +86,21 @@ export async function getScenes() {
     throw new Error(error.message || 'An error occurred while fetching scenes');
   }
 }
+
+export async function getSceneDetails(sceneId: string) {
+  const supabase = createClient();
+  
+  const { data, error } = await supabase
+    .from('midwestcon_scenes')
+    .select('*')
+    .eq('id', sceneId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching scene:", error);
+    return null;
+  }
+
+  return data;
+}
+

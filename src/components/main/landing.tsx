@@ -17,6 +17,7 @@ interface Scene {
 
 export function Landing({ userName }: { userName: string | undefined }) {
   const [scenes, setScenes] = useState<Scene[]>([]);
+  const [selectedScene, setSelectedScene] = useState<Scene | null>(null);
 
   const fetchScenes = async () => {
     try {
@@ -33,7 +34,7 @@ export function Landing({ userName }: { userName: string | undefined }) {
 
   if (!userName) {
     return (
-      <main className="flex flex-col justify-center items-center min-h-screen bg-gray-100">
+      <main className="flex flex-col justify-center items-center min-h-screen">
         <h1 className="text-4xl font-bold mb-4">Welcome to Scene Creator</h1>
         <p className="text-xl">Please log in to start creating scenes.</p>
       </main>
@@ -41,8 +42,8 @@ export function Landing({ userName }: { userName: string | undefined }) {
   }
 
   return (
-    <main className="flex flex-col items-center bg-gray-100 min-h-screen">
-      <div className="w-full max-w-6xl px-4 py-8">
+    <main className="flex flex-col items-center min-h-screen">
+      <div className="w-full max-w-6xl px-4 py-8 flex flex-col items-center justify-center">
         <div className="mb-8">
           <AddSceneDialog onSceneAdded={fetchScenes} />
         </div>
@@ -50,17 +51,17 @@ export function Landing({ userName }: { userName: string | undefined }) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {scenes.map((scene) => (
             <Link href={`/scene/${scene.id}`} key={scene.id}>
-              <div className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform duration-200 ease-in-out hover:scale-105">
+              <div className="border rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform duration-200 ease-in-out hover:scale-105">
                 {scene.imageUrl && (
                   <img src={scene.imageUrl} alt={scene.title} className="w-full h-48 object-cover" />
                 )}
-                <div className="p-4">
+                <div className="p-4 bg-[#2C3755]">
                   <h3 className="text-xl font-semibold mb-2">{scene.title}</h3>
                   {scene.description && (
-                    <p className="text-gray-600 mb-2 line-clamp-2">{scene.description}</p>
+                    <p className=" mb-2 line-clamp-2">{scene.description}</p>
                   )}
                   {scene.date && (
-                    <p className="text-sm text-gray-500">Date: {new Date(scene.date).toLocaleDateString()}</p>
+                    <p className="text-sm ">Date: {new Date(scene.date).toLocaleDateString()}</p>
                   )}
                 </div>
               </div>

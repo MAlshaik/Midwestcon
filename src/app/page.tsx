@@ -14,12 +14,6 @@ export default async function Home() {
       <div className="flex-grow">
         <Landing userName={userName} />
       </div>
-      <div className="bg-white py-8">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-2xl font-bold mb-4">Image Classifier</h2>
-          <ImageClassifier />
-        </div>
-      </div>
     </div>
   );
 }

@@ -89,7 +89,7 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Add New Scene</Button>
+        <Button className='text-2xl p-8 rounded-lg'>Add New Scene</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
