@@ -2421,11 +2421,11 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Add New Scene</Button>
+        <Button>Submit Scene Evidence</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Scene</DialogTitle>
+          <DialogTitle>Submit Scene Evidence</DialogTitle>
           <DialogDescription>
             Create a new scene by filling out the details below.
           </DialogDescription>
