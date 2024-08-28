@@ -1,8 +1,13 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { Button } from "@/components/ui/button";
 
-export default function ImageClassifier() {
+interface ImageClassifierProps {
+  onClassification: (description: string, file: File) => void;
+}
+
+export default function ImageClassifier({ onClassification }: ImageClassifierProps) {
   const [file, setFile] = useState<File | null>(null);
   const [image, setImage] = useState<string | null>(null);
   const [response, setResponse] = useState("");
@@ -14,28 +19,31 @@ export default function ImageClassifier() {
     setSubmitted(true);
     const formData = new FormData();
     formData.append("file", file as File);
+    
+    try {
+      const res = await fetch("/api/classify", {
+        method: "POST",
+        body: formData,
+      });
 
-    fetch("/api/classify", {
-      method: "POST",
-      body: formData,
-    }).then((res) => {
       const reader = res.body?.getReader();
       const decoder = new TextDecoder("utf-8");
       let content = "";
 
-      function processText({ done, value }: ReadableStreamReadResult<Uint8Array>): Promise<void> | void {
-        if (done) {
-          setResponse(cleanResponse(content));
-          return;
-        }
+      while (true) {
+        const { done, value } = await reader!.read();
+        if (done) break;
         content += decoder.decode(value, { stream: true });
-        return reader?.read().then(processText);
       }
 
-      return reader?.read().then(processText);
-    });
+      const cleanedResponse = cleanResponse(content);
+      setResponse(cleanedResponse);
+      onClassification(cleanedResponse, file as File);
+    } catch (error) {
+      console.error("Error processing image:", error);
+      setResponse("An error occurred while processing the image.");
+    }
   };
-
   const cleanResponse = (rawResponse: string) => {
     return rawResponse
       .replace(/^\d+:\s*/gm, "")
@@ -86,22 +94,19 @@ export default function ImageClassifier() {
           {submitted && !response ? "AI examination of crime scene evidence loading..." : response}
         </p>
         <div className="flex flex-row">
-          <button
-            className={`${
-              submitted || !file ? "opacity-50" : "hover:bg-gray-100"
-            } bg-white mr-4 text-slate-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow`}
+          <Button
             type="submit"
             disabled={submitted || !file}
           >
-            Describe
-          </button>
-          <button
-            className="bg-white hover:bg-red-100 text-red-800 font-semibold py-2 px-4 border border-red-400 rounded shadow"
+            Classify Image
+          </Button>
+          <Button
+            variant="destructive"
             type="button"
             onClick={onReset}
           >
             Reset
-          </button>
+          </Button>
         </div>
       </form>
     </div>
