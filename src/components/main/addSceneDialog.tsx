@@ -143,7 +143,7 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
             </Button>
           )}
           {description && (
-            <div>
+            <div className='max-h-[15rem] overflow-auto'>
               <h3 className="font-semibold mb-2">Image Description:</h3>
               <p>{description}</p>
             </div>
