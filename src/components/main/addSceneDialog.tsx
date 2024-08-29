@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createScene } from "@/server/actions/scene";
 
+
 export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
@@ -143,7 +144,7 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
             </Button>
           )}
           {description && (
-            <div>
+            <div className='max-h-[15rem] overflow-auto'>
               <h3 className="font-semibold mb-2">Image Description:</h3>
               <p>{description}</p>
             </div>
