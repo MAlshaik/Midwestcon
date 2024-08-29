@@ -1,3 +1,4 @@
+
 import { createClient as createSupabaseClient } from "@/utils/supabase/server";
 import { Navbar } from "@/components/main/navbar";
 import { Landing } from "@/components/main/landing";
@@ -7,7 +8,7 @@ import { cacheExchange, fetchExchange } from '@urql/core';
 import ExampleComponent from '@/components/main/ExampleComponent';
 
 const urqlClient = createUrqlClient({
-  url: 'https://gateway.thegraph.com/api/{api-key}/subgraphs/id/BMnKqdKs9NaXbn8VzvJmiMzUo4ogQeFw9UxnispGD11i',
+  url: 'https://gateway.thegraph.com/api/e02108768a4c298311ca08881973b9db/subgraphs/id/BMnKqdKs9NaXbn8VzvJmiMzUo4ogQeFw9UxnispGD11i',
   exchanges: [cacheExchange, fetchExchange],
 });
 
@@ -48,7 +49,7 @@ export default async function Home() {
 }
 
 
-
+//original with no subgraph integration
 // import { createClient } from "@/utils/supabase/server";
 // import { Navbar } from "@/components/main/navbar";
 // import { Landing } from "@/components/main/landing";
