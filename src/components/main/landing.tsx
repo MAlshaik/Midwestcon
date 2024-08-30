@@ -46,29 +46,22 @@ export function Landing({ userName }: { userName: string | undefined }) {
     const descriptions = selectedScenes.map(scene => scene.description).filter(Boolean) as string[];
     
     try {
-      const response = await fetch('/api/compare', {
+
+      const res = await fetch("/api/compare", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ descriptions }),
       });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
       }
+      
+      const responseText = await res.text();
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let result = '';
-
-      while (true) {
-        const { done, value } = await reader!.read();
-        if (done) break;
-        result += decoder.decode(value);
-      }
-
-      setComparisonResult(result);
+      setComparisonResult(responseText);
 
     } catch (error) {
       console.error("Error comparing scenes:", error);

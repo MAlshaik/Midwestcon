@@ -21,7 +21,8 @@ export async function POST(request: NextRequest) {
 
     // Call our compare function and stream to the client
     const response = await compareScenes(descriptions);
-    return new StreamingTextResponse(response);
+
+    return new NextResponse(response)
   } catch (error) {
     console.error("Error processing request:", error);
     return NextResponse.json(

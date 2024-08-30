@@ -39,18 +39,27 @@ export default function ImageClassifier({ onClassification }: ImageClassifierPro
         method: "POST",
         body: formData,
       });
-
-      const reader = res.body?.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let content = "";
-
-      while (true) {
-        const { done, value } = await reader!.read();
-        if (done) break;
-        content += decoder.decode(value, { stream: true });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
       }
+      
+      const responseText = await res.text();
 
-      const cleanedResponse = cleanResponse(content);
+      // const reader = res.body?.getReader();
+      // const decoder = new TextDecoder("utf-8");
+      // let content = "";
+
+      // while (true) {
+      //   const { done, value } = await reader!.read();
+      //   if (done) break;
+      //   content += decoder.decode(value, { stream: true });
+      // }
+
+      // const cleanedResponse = cleanResponse(content);
+
+      const cleanedResponse = responseText
+
       setResponse(cleanedResponse);
       onClassification(cleanedResponse, file as File);
     } catch (error) {
