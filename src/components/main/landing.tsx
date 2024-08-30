@@ -1,8 +1,9 @@
-'use client';
+"use client"
 
 import { useState, useEffect } from "react";
 import { getScenes } from "@/server/actions/scene";
 import { AddSceneDialog } from "./addSceneDialog";
+import { ResultDisplay } from "./resultDisplay";
 import Link from 'next/link';
 
 interface Scene {
@@ -17,7 +18,8 @@ interface Scene {
 
 export function Landing({ userName }: { userName: string | undefined }) {
   const [scenes, setScenes] = useState<Scene[]>([]);
-  const [selectedScene, setSelectedScene] = useState<Scene | null>(null);
+  const [selectedScenes, setSelectedScenes] = useState<Scene[]>([]);
+  const [comparisonResult, setComparisonResult] = useState<string | null>(null);
 
   const fetchScenes = async () => {
     try {
@@ -31,6 +33,48 @@ export function Landing({ userName }: { userName: string | undefined }) {
   useEffect(() => {
     fetchScenes();
   }, []);
+
+  const toggleSceneSelection = (scene: Scene) => {
+    setSelectedScenes(prevSelected => 
+      prevSelected.some(s => s.id === scene.id)
+        ? prevSelected.filter(s => s.id !== scene.id)
+        : [...prevSelected, scene]
+    );
+  };
+
+  const sendSelectedScenes = async () => {
+    const descriptions = selectedScenes.map(scene => scene.description).filter(Boolean) as string[];
+    
+    try {
+      const response = await fetch('/api/compare', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ descriptions }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let result = '';
+
+      while (true) {
+        const { done, value } = await reader!.read();
+        if (done) break;
+        result += decoder.decode(value);
+      }
+
+      setComparisonResult(result);
+
+    } catch (error) {
+      console.error("Error comparing scenes:", error);
+      setComparisonResult("An error occurred while comparing scenes.");
+    }
+  };
 
   if (!userName) {
     return (
@@ -51,26 +95,40 @@ export function Landing({ userName }: { userName: string | undefined }) {
           <AddSceneDialog onSceneAdded={fetchScenes} />
         </div>
         <h2 className="text-3xl font-bold mb-6">Your Scenes</h2>
+        <div className="mb-4">
+          <button 
+            onClick={sendSelectedScenes}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            disabled={selectedScenes.length === 0}
+          >
+            Compare Selected Scenes
+          </button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {scenes.map((scene) => (
-            <Link href={`/scene/${scene.id}`} key={scene.id}>
-              <div className="border rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform duration-200 ease-in-out hover:scale-105">
-                {scene.imageUrl && (
-                  <img src={scene.imageUrl} alt={scene.title} className="w-full h-48 object-cover" />
+            <div 
+              key={scene.id}
+              className={`border rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform duration-200 ease-in-out hover:scale-105 ${
+                selectedScenes.some(s => s.id === scene.id) ? 'border-blue-500 border-2' : ''
+              }`}
+              onClick={() => toggleSceneSelection(scene)}
+            >
+              {scene.imageUrl && (
+                <img src={scene.imageUrl} alt={scene.title} className="w-full h-48 object-cover" />
+              )}
+              <div className="p-4 bg-[#2C3755]">
+                <h3 className="text-xl font-semibold mb-2">{scene.title}</h3>
+                {scene.description && (
+                  <p className="mb-2 line-clamp-2">{scene.description}</p>
                 )}
-                <div className="p-4 bg-[#2C3755]">
-                  <h3 className="text-xl font-semibold mb-2">{scene.title}</h3>
-                  {scene.description && (
-                    <p className=" mb-2 line-clamp-2">{scene.description}</p>
-                  )}
-                  {scene.date && (
-                    <p className="text-sm ">Date: {new Date(scene.date).toLocaleDateString()}</p>
-                  )}
-                </div>
+                {scene.date && (
+                  <p className="text-sm">Date: {new Date(scene.date).toLocaleDateString()}</p>
+                )}
               </div>
-            </Link>
+            </div>
           ))}
         </div>
+        {comparisonResult && <ResultDisplay result={comparisonResult} />}
       </div>
     </main>
   );
