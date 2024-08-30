@@ -11,6 +11,7 @@ import { Loader2 } from "lucide-react";
 import { useSendRewardTransaction } from '@/app/hooks/useSendRewardTransaction';
 
 
+
 export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
@@ -191,7 +192,7 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
             </Button>
           )}
           {description && (
-            <div className="max-h-[15rem] overflow-auto">
+            <div className='max-h-[15rem] overflow-auto'>
               <h3 className="font-semibold mb-2">Image Description:</h3>
               <Textarea
                 value={description}
