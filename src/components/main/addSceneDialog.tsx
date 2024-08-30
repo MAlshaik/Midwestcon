@@ -99,8 +99,8 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
       const newScene = await createScene(formData);
 
       // Send reward transaction
-      // console.log("Sending reward transaction to account:", account);
-      // const txId = await sendReward(account);
+      console.log("Sending reward transaction to account:", account);
+      const txId = await sendReward(account);
 
       setTitle("");
       setDate("");
@@ -112,7 +112,7 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
 
       toast({
         title: "Scene Submitted",
-        description: `Your scene has been submitted successfully!`,
+        description: `Your scene has been submitted successfully! Reward transaction sent: ${txId}`,
       });
       router.push(`/scene/${newScene.id}`);
     } catch (error) {
