@@ -7,6 +7,20 @@ interface ImageClassifierProps {
   onClassification: (description: string, file: File) => void;
 }
 
+export const cleanResponse = (rawResponse: string) => {
+    return rawResponse
+      .replace(/^\d+:\s*/gm, "")
+      .replace(/\\n/g, "\n")
+      .replace(/"/g, "")
+      .replace(/(\w)-\s+(\w)/g, "$1$2")
+      .replace(/([a-zA-Z])([A-Z])/g, "$1 $2")
+      .replace(/(\w)([A-Z][a-z])/g, "$1 $2")
+      .replace(/\s+([.,!?;:])/g, "$1")
+      .replace(/\s\s+/g, " ")
+      .trim();
+  };
+
+
 export default function ImageClassifier({ onClassification }: ImageClassifierProps) {
   const [file, setFile] = useState<File | null>(null);
   const [image, setImage] = useState<string | null>(null);
@@ -44,19 +58,8 @@ export default function ImageClassifier({ onClassification }: ImageClassifierPro
       setResponse("An error occurred while processing the image.");
     }
   };
-  const cleanResponse = (rawResponse: string) => {
-    return rawResponse
-      .replace(/^\d+:\s*/gm, "")
-      .replace(/\\n/g, "\n")
-      .replace(/"/g, "")
-      .replace(/(\w)-\s+(\w)/g, "$1$2")
-      .replace(/([a-zA-Z])([A-Z])/g, "$1 $2")
-      .replace(/(\w)([A-Z][a-z])/g, "$1 $2")
-      .replace(/\s+([.,!?;:])/g, "$1")
-      .replace(/\s\s+/g, " ")
-      .trim();
-  };
 
+  
   const onReset = () => {
     setFile(null);
     setImage(null);
