@@ -6,6 +6,7 @@ import {
   jsonb,
   text,
   timestamp,
+  boolean,
   date,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
@@ -41,7 +42,9 @@ export const scenes = createTable("scenes", {
   imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
   date: date("date"),
+  rewardPending: boolean("reward_pending").default(false),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+
 });
 
 export const sceneRelations = relations(scenes, ({ one }) => ({

@@ -149,23 +149,31 @@ export default config;
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.45.2",
     "@t3-oss/env-nextjs": "^0.11.1",
+    "@vechain/connex": "^1.4.2",
+    "@vechain/dapp-kit-react": "^1.0.13",
     "again": "^0.0.1",
+    "ai": "^3.3.19",
     "axios": "^1.7.5",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.33.0",
+    "i": "^0.3.7",
     "input-otp": "^1.2.4",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.436.0",
     "next": "14.2.6",
+    "npm": "^10.8.2",
     "openai": "^4.56.0",
+    "pino-pretty": "^11.2.2",
     "postgres": "^3.4.4",
     "radix-ui": "^1.0.1",
     "react": "^18",
     "react-dom": "^18",
     "react-hot-toast": "^2.4.1",
+    "react-icons": "^5.3.0",
     "tailwind-merge": "^2.5.2",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -402,6 +410,23 @@ This is a file of the type: SVG Image
 
 This is a file of the type: SVG Image
 
+# drizzle/0004_keen_silver_sable.sql
+
+```sql
+CREATE TABLE IF NOT EXISTS "midwestcon_user_profiles" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"vechain_address" varchar(42)
+);
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "midwestcon_user_profiles" ADD CONSTRAINT "midwestcon_user_profiles_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+```
+
 # drizzle/0003_harsh_warstar.sql
 
 ```sql
@@ -443,6 +468,142 @@ CREATE TABLE IF NOT EXISTS "auth"."users" (
 	"raw_user_meta_data" jsonb NOT NULL
 );
 
+```
+
+# src/types/profiles.ts
+
+```ts
+export enum userTypeEnum{
+    "guest", "member", "admin"
+}
+
+export interface Profile {
+    supaId: string;
+    projectId: string | null;
+    userType: string;
+}
+
+export interface AccountData {
+  firstName: string;
+  lastName: string;
+}
+
+
+
+```
+
+# src/lib/utils.ts
+
+```ts
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+```
+
+# src/lib/classifier.ts
+
+```ts
+
+import { OpenAI } from "openai";
+
+import { OpenAIStream } from "ai";
+
+
+
+// create a new OpenAI client using our key from earlier
+
+const openAi = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+
+
+export const classifyImage = async (file: File) => {
+
+  // encode our file as a base64 string so it can be sent in an HTTP request
+
+  const encoded = await file
+
+    .arrayBuffer()
+
+    .then((buffer) => Buffer.from(buffer).toString("base64"));
+
+
+
+  // create an OpenAI request with a prompt
+
+  const completion = await openAi.chat.completions.create({
+
+    model: "gpt-4o",
+
+    messages: [
+
+      {
+
+        role: "user",
+
+        content: [
+
+          {
+
+            type: "text",
+
+            text: "Describe this image as if you were trying to find evidence for a crime scene. very serious, concise, and straightforward tone",
+
+          },
+
+          {
+
+            type: "image_url",
+
+            image_url: {
+
+              url: `data:image/jpeg;base64,${encoded}`,
+
+            },
+
+          },
+
+        ],
+
+      },
+
+    ],
+
+    stream: true,
+
+    max_tokens: 1000,
+
+  });
+
+
+
+  // stream the response
+
+  return OpenAIStream(completion);
+
+};
+```
+
+# src/server/helpers.ts
+
+```ts
+import { headers } from "next/headers";
+
+/**
+ * Get the correct URL for the environment
+ * @returns {string} The full URL for the current environment
+ */
+export const getURL = (path = '') => {
+    const headersList = headers();
+    const host = headersList.get('host') || headersList.get('x-forwarded-host');
+
+    const base = process.env.NEXT_PUBLIC_SITE_URL?.includes('localhost') ? 'http' : 'https';
+
+    return `${base}://${host}${path}`;
+};
 ```
 
 # src/utils/useMousePosition.tsx
@@ -567,80 +728,26 @@ export function cn(...inputs: ClassValue[]) {
 
 ```
 
-# src/types/profiles.ts
-
-```ts
-export enum userTypeEnum{
-    "guest", "member", "admin"
-}
-
-export interface Profile {
-    supaId: string;
-    projectId: string | null;
-    userType: string;
-}
-
-export interface AccountData {
-  firstName: string;
-  lastName: string;
-}
-
-
-
-```
-
-# src/server/helpers.ts
-
-```ts
-import { headers } from "next/headers";
-
-/**
- * Get the correct URL for the environment
- * @returns {string} The full URL for the current environment
- */
-export const getURL = (path = '') => {
-    const headersList = headers();
-    const host = headersList.get('host') || headersList.get('x-forwarded-host');
-
-    const base = process.env.NEXT_PUBLIC_SITE_URL?.includes('localhost') ? 'http' : 'https';
-
-    return `${base}://${host}${path}`;
-};
-```
-
-# src/lib/utils.ts
-
-```ts
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
-
-```
-
 # src/app/page.tsx
 
 ```tsx
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { Navbar } from "@/components/main/navbar";
 import { Landing } from "@/components/main/landing";
+import ImageClassifier from "@/components/ui/imageClassifier";
 
 export default async function Home() {
-
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
-  const userName = user?.user_metadata.full_name || user?.email; 
-
-  console.log(JSON.stringify(user, null, 2));
-
+  const userName = user?.user_metadata.full_name || user?.email;
 
   return (
-    <Landing userName={userName}/>
+    <div className="flex flex-col min-h-screen">
+      <Navbar userName={userName} />
+      <div className="flex-grow">
+        <Landing userName={userName} />
+      </div>
+    </div>
   );
 }
 
@@ -652,13 +759,14 @@ export default async function Home() {
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import dynamic from 'next/dynamic';
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "Create Next App",
-  description: "Generated by create next app",
-};
+const DAppKitProviderWrapper = dynamic(
+  () => import('./DAppKitProviderWrapper'),
+  { ssr: false }
+);
 
 export default function RootLayout({
   children,
@@ -667,7 +775,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={`dark ${inter.className}`}>
+        <DAppKitProviderWrapper>
+          {children}
+        </DAppKitProviderWrapper>
+      </body>
     </html>
   );
 }
@@ -711,7 +823,7 @@ export default function RootLayout({
   }
 
   .dark {
-    --background: 240 10% 3.9%;
+    --background: 224 32% 14%;
     --foreground: 0 0% 98%;
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
@@ -746,11 +858,32 @@ export default function RootLayout({
     @apply bg-background text-foreground;
   }
 }
+
 ```
 
 # src/app/favicon.ico
 
 This is a binary file of the type: Binary
+
+# src/app/DAppKitProviderWrapper.tsx
+
+```tsx
+'use client';
+
+import { DAppKitProvider } from "@vechain/dapp-kit-react";
+
+export default function DAppKitProviderWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <DAppKitProvider
+      nodeUrl="https://mainnet.vechain.org/"
+      usePersistence
+    >
+      {children}
+    </DAppKitProvider>
+  );
+}
+
+```
 
 # src/helpers/metaDataChecker.ts
 
@@ -796,6 +929,88 @@ export const INVITE_CODE = 'invite_code';
 
 ```
 
+# src/server/db/schema.ts
+
+```ts
+import {
+  pgTableCreator,
+  uuid,
+  pgSchema,
+  varchar,
+  jsonb,
+  text,
+  timestamp,
+  date,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+
+export const createTable = pgTableCreator((name) => `midwestcon_${name}`);
+
+const authSchema = pgSchema("auth");
+
+export const users = authSchema.table("users", {
+  id: uuid("id").primaryKey(),
+  email: varchar("email").notNull(),
+  raw_user_meta_data: jsonb("raw_user_meta_data").notNull(),
+});
+
+export const userProfiles = createTable("user_profiles", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  veChainAddress: varchar("vechain_address", { length: 42 }),
+});
+
+export const userRelations = relations(users, ({ many, one }) => ({
+  scenes: many(scenes),
+  profile: one(userProfiles, {
+    fields: [users.id],
+    references: [userProfiles.userId],
+  }),
+}));
+
+export const scenes = createTable("scenes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  date: date("date"),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+});
+
+export const sceneRelations = relations(scenes, ({ one }) => ({
+  user: one(users, {
+    fields: [scenes.userId],
+    references: [users.id],
+  }),
+}));
+
+```
+
+# src/server/db/index.ts
+
+```ts
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+
+import { env } from "@/env";
+import * as schema from "./schema";
+
+/**
+ * Cache the database connection in development. This avoids creating a new connection on every HMR
+ * update.
+ */
+const globalForDb = globalThis as unknown as {
+  conn: postgres.Sql | undefined;
+};
+
+const conn = globalForDb.conn ?? postgres(env.DATABASE_URL);
+if (env.NODE_ENV !== "production") globalForDb.conn = conn;
+
+export const db = drizzle(conn, { schema });
+
+```
+
 # drizzle/meta/_journal.json
 
 ```json
@@ -830,8 +1045,177 @@ export const INVITE_CODE = 'invite_code';
       "when": 1724726568517,
       "tag": "0003_harsh_warstar",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1724731758468,
+      "tag": "0004_keen_silver_sable",
+      "breakpoints": true
     }
   ]
+}
+```
+
+# drizzle/meta/0004_snapshot.json
+
+```json
+{
+  "id": "3c5ceffa-9af6-40df-9497-c53a6e84296c",
+  "prevId": "ebcc0b16-c587-48e4-9834-b09f6bfa8730",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.midwestcon_scenes": {
+      "name": "midwestcon_scenes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "midwestcon_scenes_user_id_users_id_fk": {
+          "name": "midwestcon_scenes_user_id_users_id_fk",
+          "tableFrom": "midwestcon_scenes",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.midwestcon_user_profiles": {
+      "name": "midwestcon_user_profiles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vechain_address": {
+          "name": "vechain_address",
+          "type": "varchar(42)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "midwestcon_user_profiles_user_id_users_id_fk": {
+          "name": "midwestcon_user_profiles_user_id_users_id_fk",
+          "tableFrom": "midwestcon_user_profiles",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "auth.users": {
+      "name": "users",
+      "schema": "auth",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_user_meta_data": {
+          "name": "raw_user_meta_data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
 }
 ```
 
@@ -1232,75 +1616,336 @@ export const INVITE_CODE = 'invite_code';
 }
 ```
 
-# src/server/db/schema.ts
+# src/server/actions/scene.ts
 
 ```ts
-import {
-  pgTableCreator,
-  uuid,
-  pgSchema,
-  varchar,
-  jsonb,
-  text,
-  timestamp,
-  date,
-} from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+'use server'
 
-export const createTable = pgTableCreator((name) => `midwestcon_${name}`);
+import { createClient } from '@/utils/supabase/server';
+import { db } from '@/server/db';
+import { scenes, users } from '@/server/db/schema';
+import { eq, sql } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
 
-const authSchema = pgSchema("auth");
+export async function createScene(formData: FormData) {
+  const supabase = createClient();
+  const title = formData.get('title') as string;
+  const description = formData.get('description') as string;
+  const dateStr = formData.get('date') as string;
+  const file = formData.get('file') as File;
 
-export const users = authSchema.table("users", {
-  id: uuid("id").primaryKey(),
-  email: varchar("email").notNull(),
-  raw_user_meta_data: jsonb("raw_user_meta_data").notNull(),
-});
+  if (!title || !file) {
+    throw new Error('Title and file are required');
+  }
 
-export const userRelations = relations(users, ({ many }) => ({
-  scenes: many(scenes),
-}));
+  // Parse the date string into a Date object
+  const date = dateStr ? new Date(dateStr) : new Date();
 
-export const scenes = createTable("scenes", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  title: text("title").notNull(),
-  description: text("description"),
-  imageUrl: text("image_url"),
-  createdAt: timestamp("created_at").defaultNow(),
-  date: date("date"), // Make this nullable
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-});
+  // Format the date as an ISO string (YYYY-MM-DD)
+  const formattedDate = date.toISOString().split('T')[0];
 
-export const sceneRelations = relations(scenes, ({ one }) => ({
-  user: one(users, {
-    fields: [scenes.userId],
-    references: [users.id],
-  }),
-}));
+  try {
+    // Get the current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Upload file to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase
+      .storage
+      .from('scene-images')
+      .upload(`${Date.now()}_${file.name}`, file);
+
+    if (uploadError) {
+      throw new Error(uploadError.message);
+    }
+
+    // Get public URL of the uploaded file
+    const { data: { publicUrl } } = supabase
+      .storage
+      .from('scene-images')
+      .getPublicUrl(uploadData.path);
+
+    // Create new scene in the database
+    const [newScene] = await db.insert(scenes).values({
+      title,
+      description,
+      imageUrl: publicUrl,
+      userId: user.id,
+      date: sql`${formattedDate}::date`, // Use SQL template literal to ensure proper date formatting
+    }).returning();
+
+    revalidatePath('/');
+    return newScene;
+  } catch (error: any) {
+    console.error('Error in createScene:', error);
+    throw new Error(error.message || 'An error occurred while creating the scene');
+  }
+}
+
+
+export async function getScenes() {
+  const supabase = createClient();
+
+  try {
+    // Get the current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Fetch scenes for the current user
+    const userScenes = await db.query.scenes.findMany({
+      where: eq(scenes.userId, user.id),
+      orderBy: (scenes, { desc }) => [desc(scenes.createdAt)],
+    });
+
+    return userScenes;
+  } catch (error: any) {
+    console.error('Error in getScenes:', error);
+    throw new Error(error.message || 'An error occurred while fetching scenes');
+  }
+}
+
+export async function getSceneDetails(sceneId: string) {
+  const supabase = createClient();
+  
+  const { data, error } = await supabase
+    .from('midwestcon_scenes')
+    .select('*')
+    .eq('id', sceneId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching scene:", error);
+    return null;
+  }
+
+  return data;
+}
+
 
 ```
 
-# src/server/db/index.ts
+# src/server/actions/auth.ts
 
 ```ts
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+"use server";
 
-import { env } from "@/env";
-import * as schema from "./schema";
+import { redirect } from "next/navigation";
+import { createClient } from "@/utils/supabase/server";
+import { getURL } from "@/utils/helpers";
+import { AccountData } from "@/types/profiles";
+import { cookies } from "next/headers";
+import { PENDING_USER } from "@/constants/cookies";
 
 /**
- * Cache the database connection in development. This avoids creating a new connection on every HMR
- * update.
+ * Logs a user in
+ * @param email the email of the user
+ * @param password the password of the user
+ * returns null if successful, or an error message if not
  */
-const globalForDb = globalThis as unknown as {
-  conn: postgres.Sql | undefined;
-};
+export async function login(email: string, password: string): Promise<string | null> {
+  const supabase = createClient();
+  
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-const conn = globalForDb.conn ?? postgres(env.DATABASE_URL);
-if (env.NODE_ENV !== "production") globalForDb.conn = conn;
+  return error ? error.message : null;
+}
 
-export const db = drizzle(conn, { schema });
+
+/**
+ * Registers a user
+ * @param email the email of the user
+ * @param password the password of the user
+ * @returns null if successful, or an error message if not
+ */
+export async function register(email: string, password: string) : Promise<string | null> {
+    const supabase = createClient();
+
+    const userData = {
+      email,
+      password
+    };
+
+    const { data, error } = await supabase.auth.signUp(userData);
+
+    if (error) {
+      return error.message;
+    }
+
+    await setPendingUser(email);
+  
+    return null;
+}
+
+export async function setPendingUser(email: string) : Promise<void> {
+  cookies().set(PENDING_USER, email, { 
+    httpOnly: true, 
+    secure: true, 
+    sameSite: 'strict',
+    maxAge: 3600
+  })
+}
+
+export async function getPendingUser() : Promise<string | undefined> {
+  return cookies().get(PENDING_USER)?.value;
+}
+
+export async function deletePendingUser() : Promise<void> {
+  cookies().delete(PENDING_USER);
+}
+
+/**
+ * Logs a user out
+ */
+export async function logout() {
+    const supabase = createClient();
+  
+    const { error } = await supabase.auth.signOut();
+  
+    if (error) {
+      redirect('/error?message=' + error.message);
+    }
+
+    redirect('/');
+}
+
+/**
+ * Completes a user's account
+ */
+export async function completeAccount(data: AccountData) {
+    const supabase = createClient();
+    
+    if (!data.firstName || !data.lastName) {
+        return 'Please enter your first and last name';
+    }
+
+    const {error} = await supabase.auth.updateUser({
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        fullName: `${data.firstName} ${data.lastName}`,
+      }
+    });
+    if (error) {
+        return error.message;
+    }
+
+    return null;
+}
+
+
+/**
+ * Updates a user's profile
+ * @param data The updated user data
+ * @returns null if successful, or an error message if not
+ */
+export async function updateProfile(data: Partial<AccountData>): Promise<string | null> {
+    const supabase = createClient();
+    
+    const { error } = await supabase.auth.updateUser({
+        data: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            fullName: data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : undefined,
+        }
+    });
+
+    if (error) {
+        return error.message;
+    }
+    return null;
+}
+
+
+export async function linkVeChainWallet(userId: string, address: string): Promise<string | null> {
+  const supabase = createClient();
+
+  const { error } = await supabase
+    .from('user_profiles')
+    .upsert({ user_id: userId, vechain_address: address }, { onConflict: 'user_id' });
+
+  if (error) {
+    console.error('Error linking VeChain address:', error);
+    return error.message;
+  }
+
+  return null;
+}
+
+export async function getVeChainAddress(userId: string): Promise<string | null> {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .select('vechain_address')
+    .eq('user_id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching VeChain address:', error);
+    return null;
+  }
+
+  return data?.vechain_address || null;
+}
+
+/**
+ * Logs in a user with Google
+ * @returns redirects to the home page if successful, and back to login page if not
+ */
+export async function loginWithGoogle(
+) : Promise<void> {
+  const supabase = createClient();
+
+  const redirectUrl = getURL('/auth/callback');
+
+  console.log("auth url: ", redirectUrl)
+  console.log('ahahahaha')
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: redirectUrl,
+    },
+  })
+
+  if (error) {
+    redirect('/login?message=' + error.message);
+  }
+
+  redirect(data.url)
+}
+
+/**
+ * Confirms a user's email with OTP
+ * @param email email of the user
+ * @param otp otp of the user
+ * @returns redirects to the home page if successful, and back to login page if not
+ */
+export async function confirmEmail(
+  email: string,
+  otp: string
+) : Promise<void> {
+  const supabase = createClient();
+
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token: otp,
+    type: 'signup',
+  });
+
+  if (error) {
+    redirect('/confirm?message=' + error.message);
+  }
+
+  await deletePendingUser();
+
+  redirect('/additional-info');
+}
+
 
 ```
 
@@ -1678,6 +2323,126 @@ export { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator }
 
 ```
 
+# src/components/ui/imageClassifier.tsx
+
+```tsx
+"use client";
+
+import { useState, FormEvent } from "react";
+import { Button } from "@/components/ui/button";
+
+interface ImageClassifierProps {
+  onClassification: (description: string, file: File) => void;
+}
+
+export default function ImageClassifier({ onClassification }: ImageClassifierProps) {
+  const [file, setFile] = useState<File | null>(null);
+  const [image, setImage] = useState<string | null>(null);
+  const [response, setResponse] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [inputKey, setInputKey] = useState(new Date().toString());
+
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmitted(true);
+    const formData = new FormData();
+    formData.append("file", file as File);
+    
+    try {
+      const res = await fetch("/api/classify", {
+        method: "POST",
+        body: formData,
+      });
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let content = "";
+
+      while (true) {
+        const { done, value } = await reader!.read();
+        if (done) break;
+        content += decoder.decode(value, { stream: true });
+      }
+
+      const cleanedResponse = cleanResponse(content);
+      setResponse(cleanedResponse);
+      onClassification(cleanedResponse, file as File);
+    } catch (error) {
+      console.error("Error processing image:", error);
+      setResponse("An error occurred while processing the image.");
+    }
+  };
+  const cleanResponse = (rawResponse: string) => {
+    return rawResponse
+      .replace(/^\d+:\s*/gm, "")
+      .replace(/\\n/g, "\n")
+      .replace(/"/g, "")
+      .replace(/(\w)-\s+(\w)/g, "$1$2")
+      .replace(/([a-zA-Z])([A-Z])/g, "$1 $2")
+      .replace(/(\w)([A-Z][a-z])/g, "$1 $2")
+      .replace(/\s+([.,!?;:])/g, "$1")
+      .replace(/\s\s+/g, " ")
+      .trim();
+  };
+
+  const onReset = () => {
+    setFile(null);
+    setImage(null);
+    setResponse("");
+    setSubmitted(false);
+    setInputKey(new Date().toString());
+  };
+
+  return (
+    <div className="max-w-4xl">
+      {image && (
+        <img
+          src={image}
+          alt="An image to classify"
+          className="mb-8 max-w-xs max-h-60 object-contain"
+        />
+      )}
+      <form onSubmit={onSubmit}>
+        <input
+          key={inputKey}
+          type="file"
+          accept="image/jpeg"
+          onChange={(e) => {
+            const files = e.target.files;
+            if (files?.length) {
+              setFile(files[0]);
+              setImage(URL.createObjectURL(files[0]));
+            } else {
+              setFile(null);
+              setImage(null);
+            }
+          }}
+        />
+        <p className="py-8 text-slate-800">
+          {submitted && !response ? "AI examination of crime scene evidence loading..." : response}
+        </p>
+        <div className="flex flex-row">
+          <Button
+            type="submit"
+            disabled={submitted || !file}
+          >
+            Classify Image
+          </Button>
+          <Button
+            variant="destructive"
+            type="button"
+            onClick={onReset}
+          >
+            Reset
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+```
+
 # src/components/ui/dialog.tsx
 
 ```tsx
@@ -1953,288 +2718,6 @@ export { Button, buttonVariants }
 
 ```
 
-# src/server/actions/scene.ts
-
-```ts
-'use server'
-
-import { createClient } from '@/utils/supabase/server';
-import { db } from '@/server/db';
-import { scenes, users } from '@/server/db/schema';
-import { eq, sql } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
-
-export async function createScene(formData: FormData) {
-  const supabase = createClient();
-  const title = formData.get('title') as string;
-  const description = formData.get('description') as string;
-  const dateStr = formData.get('date') as string;
-  const file = formData.get('file') as File;
-
-  if (!title || !file) {
-    throw new Error('Title and file are required');
-  }
-
-  // Parse the date string into a Date object
-  const date = dateStr ? new Date(dateStr) : new Date();
-
-  // Format the date as an ISO string (YYYY-MM-DD)
-  const formattedDate = date.toISOString().split('T')[0];
-
-  try {
-    // Get the current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      throw new Error('User not authenticated');
-    }
-
-    // Upload file to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase
-      .storage
-      .from('scene-images')
-      .upload(`${Date.now()}_${file.name}`, file);
-
-    if (uploadError) {
-      throw new Error(uploadError.message);
-    }
-
-    // Get public URL of the uploaded file
-    const { data: { publicUrl } } = supabase
-      .storage
-      .from('scene-images')
-      .getPublicUrl(uploadData.path);
-
-    // Create new scene in the database
-    const [newScene] = await db.insert(scenes).values({
-      title,
-      description,
-      imageUrl: publicUrl,
-      userId: user.id,
-      date: sql`${formattedDate}::date`, // Use SQL template literal to ensure proper date formatting
-    }).returning();
-
-    revalidatePath('/');
-    return newScene;
-  } catch (error: any) {
-    console.error('Error in createScene:', error);
-    throw new Error(error.message || 'An error occurred while creating the scene');
-  }
-}
-
-export async function getScenes() {
-  const supabase = createClient();
-
-  try {
-    // Get the current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      throw new Error('User not authenticated');
-    }
-
-    // Fetch scenes for the current user
-    const userScenes = await db.query.users.findFirst({
-      where: eq(users.id, user.id),
-      with: {
-        scenes: true,
-      },
-    });
-
-    return userScenes?.scenes || [];
-  } catch (error: any) {
-    throw new Error(error.message);
-  }
-}
-
-```
-
-# src/server/actions/auth.ts
-
-```ts
-"use server";
-
-import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
-import { getURL } from "@/utils/helpers";
-import { AccountData } from "@/types/profiles";
-import { cookies } from "next/headers";
-import { PENDING_USER } from "@/constants/cookies";
-
-/**
- * Logs a user in
- * @param email the email of the user
- * @param password the password of the user
- * returns null if successful, or an error message if not
- */
-export async function login(email: string, password: string): Promise<string | null> {
-  const supabase = createClient();
-  
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-  return error ? error.message : null;
-}
-
-
-/**
- * Registers a user
- * @param email the email of the user
- * @param password the password of the user
- * @returns null if successful, or an error message if not
- */
-export async function register(email: string, password: string) : Promise<string | null> {
-    const supabase = createClient();
-
-    const userData = {
-      email,
-      password
-    };
-
-    const { data, error } = await supabase.auth.signUp(userData);
-
-    if (error) {
-      return error.message;
-    }
-
-    await setPendingUser(email);
-  
-    return null;
-}
-
-export async function setPendingUser(email: string) : Promise<void> {
-  cookies().set(PENDING_USER, email, { 
-    httpOnly: true, 
-    secure: true, 
-    sameSite: 'strict',
-    maxAge: 3600
-  })
-}
-
-export async function getPendingUser() : Promise<string | undefined> {
-  return cookies().get(PENDING_USER)?.value;
-}
-
-export async function deletePendingUser() : Promise<void> {
-  cookies().delete(PENDING_USER);
-}
-
-/**
- * Logs a user out
- */
-export async function logout() {
-    const supabase = createClient();
-  
-    const { error } = await supabase.auth.signOut();
-  
-    if (error) {
-      redirect('/error?message=' + error.message);
-    }
-
-    redirect('/');
-}
-
-/**
- * Completes a user's account
- */
-export async function completeAccount(data: AccountData) {
-    const supabase = createClient();
-    
-    if (!data.firstName || !data.lastName) {
-        return 'Please enter your first and last name';
-    }
-
-    const {error} = await supabase.auth.updateUser({
-      data: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        fullName: `${data.firstName} ${data.lastName}`,
-      }
-    });
-    if (error) {
-        return error.message;
-    }
-
-    return null;
-}
-
-
-/**
- * Updates a user's profile
- * @param data The updated user data
- * @returns null if successful, or an error message if not
- */
-export async function updateProfile(data: Partial<AccountData>): Promise<string | null> {
-    const supabase = createClient();
-    
-    const { error } = await supabase.auth.updateUser({
-        data: {
-            firstName: data.firstName,
-            lastName: data.lastName,
-            fullName: data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : undefined,
-        }
-    });
-
-    if (error) {
-        return error.message;
-    }
-    return null;
-}
-
-/**
- * Logs in a user with Google
- * @returns redirects to the home page if successful, and back to login page if not
- */
-export async function loginWithGoogle(
-) : Promise<void> {
-  const supabase = createClient();
-
-  const redirectUrl = getURL('/auth/callback');
-
-  console.log("auth url: ", redirectUrl)
-  console.log('ahahahaha')
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: redirectUrl,
-    },
-  })
-
-  if (error) {
-    redirect('/login?message=' + error.message);
-  }
-
-  redirect(data.url)
-}
-
-/**
- * Confirms a user's email with OTP
- * @param email email of the user
- * @param otp otp of the user
- * @returns redirects to the home page if successful, and back to login page if not
- */
-export async function confirmEmail(
-  email: string,
-  otp: string
-) : Promise<void> {
-  const supabase = createClient();
-
-  const { error } = await supabase.auth.verifyOtp({
-    email,
-    token: otp,
-    type: 'signup',
-  });
-
-  if (error) {
-    redirect('/confirm?message=' + error.message);
-  }
-
-  await deletePendingUser();
-
-  redirect('/additional-info');
-}
-
-
-```
-
 # src/app/auth/default.tsx
 
 ```tsx
@@ -2243,60 +2726,42 @@ export default function AuthDefault() {
 }
 ```
 
-# src/app/openai/route.ts
+# src/components/main/navbar.tsx
 
-```ts
-import { NextRequest, NextResponse } from 'next/server';
-import { Configuration, OpenAIApi } from 'openai';
-import axios from 'axios';
+```tsx
+'use client';
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { logout } from "@/server/actions/auth";
+import ConnectWallet from "./connectWallet";
 
-const openai = new OpenAIApi(configuration);
+export function Navbar({ userName }: { userName: string | undefined }) {
+  const router = useRouter();
 
-export async function POST(req: NextRequest) {
-  const { prompt, type } = await req.json();
-
-  if (!prompt || !type) {
-    return NextResponse.json({ error: 'Prompt and type are required' }, { status: 400 });
-  }
-
-  try {
-    if (type === 'text') {
-      const completion = await openai.createCompletion({
-        model: 'text-davinci-004',
-        prompt,
-        max_tokens: 150,
-      });
-
-      const result = completion.data.choices[0].text;
-      return NextResponse.json({ result });
-    } else if (type === 'image') {
-      const response = await axios.post(
-        'https://api.openai.com/v1/images/generations',
-        {
-          prompt: prompt,
-          n: 1,
-          size: '1024x1024',
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          },
-        }
-      );
-
-      const imageUrl = response.data.data[0].url;
-      return NextResponse.json({ imageUrl });
-    } else {
-      return NextResponse.json({ error: 'Invalid type specified' }, { status: 400 });
-    }
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Something went wrong' }, { status: 500 });
-  }
+  return (
+    <nav className="bg-background border-b">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex">
+            <div className="flex-shrink-0 flex items-center">
+              <span className="text-xl font-bold">Criminal Scenes</span>
+            </div>
+          </div>
+          <div className="flex items-center">
+            {!userName ? (
+              <Button onClick={() => router.push('/auth/register')} className="mr-2">Login</Button>
+            ) : (
+              <>
+                <ConnectWallet />
+                <Button onClick={() => logout()} className="ml-2">Logout</Button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
 }
 
 ```
@@ -2307,23 +2772,23 @@ export async function POST(req: NextRequest) {
 'use client';
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "../ui/button";
-import { logout } from "@/server/actions/auth";
 import { getScenes } from "@/server/actions/scene";
 import { AddSceneDialog } from "./addSceneDialog";
+import Link from 'next/link';
 
 interface Scene {
   id: string;
   title: string;
-  description: string;
-  imageUrl: string;
-  date: string;
+  description: string | null;
+  imageUrl: string | null;
+  date: string | null;
+  userId: string;
+  createdAt: Date | null;
 }
 
-export function Landing({ userName }: { userName: string }) {
-  const router = useRouter();
+export function Landing({ userName }: { userName: string | undefined }) {
   const [scenes, setScenes] = useState<Scene[]>([]);
+  const [selectedScene, setSelectedScene] = useState<Scene | null>(null);
 
   const fetchScenes = async () => {
     try {
@@ -2338,39 +2803,41 @@ export function Landing({ userName }: { userName: string }) {
     fetchScenes();
   }, []);
 
+  if (!userName) {
+    return (
+      <main className="flex flex-col justify-center items-center min-h-screen">
+        <h1 className="text-4xl font-bold mb-4">Welcome to Scene Creator</h1>
+        <p className="text-xl">Please log in to start creating scenes.</p>
+      </main>
+    );
+  }
+
   return (
-    <main className="flex flex-col justify-center items-center">
-      <div className="w-screen max-w-[1024px] px-4 py-16">
-        <div className="py-28 flex flex-col items-center justify-center">
-          {!userName ? (
-            <Button onClick={() => router.push('/auth/register')}>Login</Button>
-          ) : (
-            <>
-              <h1 className="text-4xl font-bold">Welcome {userName}</h1>
-              <div className="flex gap-2 mb-8">
-                <Button onClick={() => router.push('/dashboard')}>Dashboard</Button>
-                <Button onClick={() => logout()}>Logout</Button>
-              </div>
-
-              <div className="w-full mb-8">
-                <AddSceneDialog onSceneAdded={fetchScenes} />
-              </div>
-
-              <div className="w-full">
-                <h2 className="text-2xl font-bold mb-4">Your Scenes</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {scenes.map((scene) => (
-                    <div key={scene.id} className="border rounded p-4">
-                      <img src={scene.imageUrl} alt={scene.title} className="w-full h-48 object-cover mb-2" />
-                      <h3 className="text-xl font-bold">{scene.title}</h3>
-                      <p>{scene.description}</p>
-                      <p className="text-sm text-gray-500 mt-2">Date: {new Date(scene.date).toLocaleDateString()}</p>
-                    </div>
-                  ))}
+    <main className="flex flex-col items-center min-h-screen">
+      <div className="w-full max-w-6xl px-4 py-8 flex flex-col items-center justify-center">
+        <div className="mb-8">
+          <AddSceneDialog onSceneAdded={fetchScenes} />
+        </div>
+        <h2 className="text-3xl font-bold mb-6">Your Scenes</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {scenes.map((scene) => (
+            <Link href={`/scene/${scene.id}`} key={scene.id}>
+              <div className="border rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform duration-200 ease-in-out hover:scale-105">
+                {scene.imageUrl && (
+                  <img src={scene.imageUrl} alt={scene.title} className="w-full h-48 object-cover" />
+                )}
+                <div className="p-4 bg-[#2C3755]">
+                  <h3 className="text-xl font-semibold mb-2">{scene.title}</h3>
+                  {scene.description && (
+                    <p className=" mb-2 line-clamp-2">{scene.description}</p>
+                  )}
+                  {scene.date && (
+                    <p className="text-sm ">Date: {new Date(scene.date).toLocaleDateString()}</p>
+                  )}
                 </div>
               </div>
-            </>
-          )}
+            </Link>
+          ))}
         </div>
       </div>
     </main>
@@ -2379,10 +2846,68 @@ export function Landing({ userName }: { userName: string }) {
 
 ```
 
+# src/components/main/connectWallet.tsx
+
+```tsx
+'use client';
+
+import { useEffect, useState } from "react";
+import { useWallet, WalletButton, useWalletModal } from "@vechain/dapp-kit-react";
+import { Button } from "@/components/ui/button";
+import { FaWallet } from "react-icons/fa6";
+
+// You might need to create this utility function
+const humanAddress = (address: string, lengthBefore = 4, lengthAfter = 10) => {
+  const before = address.substring(0, lengthBefore)
+  const after = address.substring(address.length - lengthAfter)
+  return `${before}…${after}`
+}
+
+export const ConnectWallet = () => {
+  const { account } = useWallet();
+  const { open } = useWalletModal();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null; // or a loading placeholder
+  }
+
+  if (!account) {
+    return (
+      <Button
+        onClick={open}
+        className="bg-primary text-primary-foreground hover:bg-primary/90"
+      >
+        <FaWallet className="mr-2 h-4 w-4" /> Connect Wallet
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      onClick={open}
+      className="rounded-full bg-[rgba(235,236,252,1)] text-black hover:bg-[rgba(235,236,252,0.8)]"
+    >
+      {/* You might want to replace this with an actual icon component */}
+      <div className="mr-2 h-4 w-4 rounded-full bg-gray-300"></div>
+      <span className="font-normal">{humanAddress(account, 4, 6)}</span>
+    </Button>
+  );
+};
+
+export default ConnectWallet;
+
+```
+
 # src/components/main/addSceneDialog.tsx
 
 ```tsx
-import React, { useState } from 'react';
+import React, { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -2390,29 +2915,80 @@ import { createScene } from "@/server/actions/scene";
 
 export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [image, setImage] = useState<string | null>(null);
+  const [description, setDescription] = useState("");
+  const [classifying, setClassifying] = useState(false);
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
-  const handleSceneSubmit = async (e: React.FormEvent) => {
+  const cleanResponse = (rawResponse: string) => {
+    return rawResponse
+      .replace(/^\d+:\s*/gm, "")
+      .replace(/\\n/g, "\n")
+      .replace(/"/g, "")
+      .replace(/(\w)-\s+(\w)/g, "$1$2")
+      .replace(/([a-zA-Z])([A-Z])/g, "$1 $2")
+      .replace(/(\w)([A-Z][a-z])/g, "$1 $2")
+      .replace(/\s+([.,!?;:])/g, "$1")
+      .replace(/\s\s+/g, " ")
+      .trim();
+  };
+
+  const classifyImage = async () => {
+    if (!file) return;
+    setClassifying(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const response = await fetch("/api/classify", {
+        method: "POST",
+        body: formData,
+      });
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let content = "";
+      
+      function processText({ done, value }: ReadableStreamReadResult<Uint8Array>): Promise<void> | void {
+        if (done) {
+          setDescription(cleanResponse(content));
+          setClassifying(false);
+          return;
+        }
+        content += decoder.decode(value, { stream: true });
+        return reader?.read().then(processText);
+      }
+      
+      await reader?.read().then(processText);
+    } catch (error) {
+      console.error("Error classifying image:", error);
+      setClassifying(false);
+    }
+  };
+
+  const handleSceneSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!title || !file || !date) return;
-
+    if (!title || !file || !date || !description) return;
+    
     const formData = new FormData();
     formData.append('title', title);
     formData.append('description', description);
     formData.append('date', date);
     formData.append('file', file);
-
+    
     try {
-      await createScene(formData);
+      const newScene = await createScene(formData);
       setTitle("");
-      setDescription("");
       setDate("");
       setFile(null);
+      setImage(null);
+      setDescription("");
       setOpen(false);
       onSceneAdded();
+      
+      // Navigate to the new scene page
+      router.push(`/scene/${newScene.id}`);
     } catch (error) {
       console.error("Error creating scene:", error);
     }
@@ -2421,13 +2997,13 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Submit Scene Evidence</Button>
+        <Button className='text-2xl p-8 rounded-lg'>Submit Scene Evidence</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Submit Scene Evidence</DialogTitle>
           <DialogDescription>
-            Create a new scene by filling out the details below.
+            Upload an image and fill out the details to create a new scene.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSceneSubmit} className="grid gap-4 py-4">
@@ -2439,24 +3015,50 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
             required
           />
           <Input
-            type="text"
-            placeholder="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-          <Input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
             required
           />
-          <Input
+          <input
             type="file"
             accept="image/*"
-            onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+            onChange={(e) => {
+              const files = e.target.files;
+              if (files?.length) {
+                setFile(files[0]);
+                setImage(URL.createObjectURL(files[0]));
+                setDescription(""); // Reset description when new image is uploaded
+              } else {
+                setFile(null);
+                setImage(null);
+                setDescription("");
+              }
+            }}
+            className='block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400'
             required
           />
-          <Button type="submit">Create Scene</Button>
+          {image && (
+            <img
+              src={image}
+              alt="Uploaded scene"
+              className="mb-4 max-w-full h-auto"
+            />
+          )}
+          {file && !description && (
+            <Button type="button" onClick={classifyImage} disabled={classifying}>
+              {classifying ? "Classifying..." : "Classify Image"}
+            </Button>
+          )}
+          {description && (
+            <div className='max-h-[15rem] overflow-auto'>
+              <h3 className="font-semibold mb-2">Image Description:</h3>
+              <p>{description}</p>
+            </div>
+          )}
+          <Button type="submit" disabled={!title || !file || !date || !description}>
+            Create Scene
+          </Button>
         </form>
       </DialogContent>
     </Dialog>
@@ -2465,14 +3067,63 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
 
 ```
 
+# src/app/scene/[sceneId]/page.tsx
+
+```tsx
+import { createClient } from "@/utils/supabase/server";
+import { notFound } from "next/navigation";
+import { Navbar } from "@/components/main/navbar";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { getSceneDetails } from "@/server/actions/scene";
+
+
+export default async function SceneDetail({ params }: { params: { sceneId: string } }) {
+  const scene = await getSceneDetails(params.sceneId);
+  console.log(scene);
+
+  if (!scene) {
+    notFound();
+  }
+
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const userName = user?.user_metadata.full_name || user?.email;
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Navbar userName={userName} />
+      <main className="flex-grow  py-8">
+        <div className="max-w-4xl mx-auto px-4">
+          <Link href="/">
+            <Button variant="outline" className="mb-6">← Back to Scenes</Button>
+          </Link>
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <img src={scene.image_url} alt={scene.title} className="w-full h-64 object-cover" />
+            <div className="p-6">
+              <h1 className="text-3xl font-bold mb-4">{scene.title}</h1>
+              <p className="text-gray-600 mb-4">{scene.description}</p>
+              <p className="text-sm text-gray-500">Created on: {new Date(scene.date).toLocaleDateString()}</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+```
+
 # src/app/auth/register/registerForm.tsx
 
 ```tsx
+// src/app/auth/register/registerForm.tsx
+
 "use client";
 
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
-
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -2483,11 +3134,9 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-
-
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { register, loginWithGoogle } from "@/server/actions/auth";
+import { useState, useEffect } from "react";
+import { register, loginWithGoogle, getVeChainAddress } from "@/server/actions/auth";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
 
@@ -2495,61 +3144,83 @@ export default function RegisterForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
+    const [user, setUser] = useState<any>(null);
+    const [veChainAddress, setVeChainAddress] = useState<string | null>(null);
 
     const router = useRouter();
-    
+    const supabase = createClient();
+
+    useEffect(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+                if (session) {
+                    setUser(session.user);
+                    const address = await getVeChainAddress(session.user.id);
+                    setVeChainAddress(address);
+                } else {
+                    setUser(null);
+                    setVeChainAddress(null);
+                }
+            }
+        );
+
+        return () => subscription.unsubscribe();
+    }, []);
+
     const handleSubmit = async () => {
         const res = await register(email, password);
         setMessage(res || ''); 
         if (res) {
             toast.error(res, {
-            duration: 4000, 
-            position: 'bottom-right', 
-            style: {
-                border: '2px solid #333',
-                color: '#fff',
-                backgroundColor: '#333',
-            },
+                duration: 4000, 
+                position: 'bottom-right', 
+                style: {
+                    border: '2px solid #333',
+                    color: '#fff',
+                    backgroundColor: '#333',
+                },
             });
         } else {
             console.log("registered successfully")
             toast.success('Registered successfully', {
-            duration: 4000, 
-            position: 'bottom-right', 
-            style: {
-                border: '2px solid #333',
-                color: '#fff',
-                backgroundColor: '#333',
-            }, 
+                duration: 4000, 
+                position: 'bottom-right', 
+                style: {
+                    border: '2px solid #333',
+                    color: '#fff',
+                    backgroundColor: '#333',
+                }, 
             });
-
-            router.push('/');
+            router.push('/connect-wallet');
         }
+    }
 
+    if (user && !veChainAddress) {
+        router.push('/connect-wallet');
+        return null;
     }
 
     return (
         <Card className="flex flex-col bg-background mx-auto border-none max-w-sm">
-        <CardHeader>
-            <CardTitle className="text-2xl text-center"></CardTitle>
-            <CardDescription className="text-m flex flex-col gap-4">
-            <Button 
-            variant="secondary" 
-            className="w-full gap-3"
-            onClick={() => loginWithGoogle()}
-            >
-                <Image
-                src={'/google.svg'}
-                alt="Google"
-                width={20}
-                height={20}
-                >
-                </Image>
-                Register with Google
-            </Button>
-            </CardDescription>
-        </CardHeader>
-        {/*}
+            <CardHeader>
+                <CardTitle className="text-2xl text-center"></CardTitle>
+                <CardDescription className="text-m flex flex-col gap-4">
+                    <Button 
+                        variant="secondary" 
+                        className="w-full gap-3"
+                        onClick={() => loginWithGoogle()}
+                    >
+                        <Image
+                            src={'/google.svg'}
+                            alt="Google"
+                            width={20}
+                            height={20}
+                        />
+                        Register with Google
+                    </Button>
+                </CardDescription>
+            </CardHeader>
+            {/*}
         <div className="flex flex-row justify-center text-center items-center gap-4">
             <p className="w-1/5">Or</p>
         </div>
@@ -2912,6 +3583,58 @@ export async function GET(request: Request) {
 
   // return the user to an error page with instructions
   return NextResponse.redirect(`${origin}/auth/auth-code-error`)
+}
+```
+
+# src/app/api/classify/route.ts
+
+```ts
+import { classifyImage } from "@/lib/classifier";
+
+    import { NextResponse, NextRequest } from "next/server";
+
+    import { StreamingTextResponse } from "ai";
+
+
+
+    // Set the runtime to edge for best performance
+
+    export const runtime = "edge";
+
+
+
+    // add a listener to POST requests
+
+    export async function POST(request: NextRequest) {
+
+      // read our file from request data
+
+      const data = await request.formData();
+
+      const file: File | null = data.get("file") as unknown as File;
+
+
+
+      if (!file) {
+
+        return NextResponse.json(
+
+          { message: "File not present in body" },
+
+          { status: 400, statusText: "Bad Request" }
+
+        );
+
+      }
+
+
+
+      //call our classify function and stream to the client
+
+      const response = await classifyImage(file);
+
+      return new StreamingTextResponse(response);
+
 }
 ```
 

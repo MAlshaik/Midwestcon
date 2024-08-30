@@ -3,7 +3,12 @@ import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
 import { createScene } from "@/server/actions/scene";
+import { useWallet } from "@vechain/dapp-kit-react";
+import { Loader2 } from "lucide-react";
+import { useSendRewardTransaction } from '@/app/hooks/useSendRewardTransaction';
 
 export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
   const [title, setTitle] = useState("");
@@ -12,21 +17,13 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
   const [image, setImage] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [classifying, setClassifying] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const { account } = useWallet();
+  const { toast } = useToast();
+  const { sendReward, isLoading: isRewardLoading, error: rewardError } = useSendRewardTransaction();
 
-  const cleanResponse = (rawResponse: string) => {
-    return rawResponse
-      .replace(/^\d+:\s*/gm, "")
-      .replace(/\\n/g, "\n")
-      .replace(/"/g, "")
-      .replace(/(\w)-\s+(\w)/g, "$1$2")
-      .replace(/([a-zA-Z])([A-Z])/g, "$1 $2")
-      .replace(/(\w)([A-Z][a-z])/g, "$1 $2")
-      .replace(/\s+([.,!?;:])/g, "$1")
-      .replace(/\s\s+/g, " ")
-      .trim();
-  };
 
   const classifyImage = async () => {
     if (!file) return;
@@ -41,7 +38,7 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
       const reader = response.body?.getReader();
       const decoder = new TextDecoder("utf-8");
       let content = "";
-      
+
       function processText({ done, value }: ReadableStreamReadResult<Uint8Array>): Promise<void> | void {
         if (done) {
           setDescription(cleanResponse(content));
@@ -51,26 +48,59 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
         content += decoder.decode(value, { stream: true });
         return reader?.read().then(processText);
       }
-      
+
       await reader?.read().then(processText);
     } catch (error) {
       console.error("Error classifying image:", error);
+      toast({
+        title: "Classification Error",
+        description: "Failed to classify the image. Please try again.",
+        variant: "destructive",
+      });
       setClassifying(false);
     }
+  };
+
+  const cleanResponse = (rawResponse: string) => {
+    return rawResponse
+      .replace(/^\d+:\s*/gm, "")
+      .replace(/\\n/g, "\n")
+      .replace(/"/g, "")
+      .replace(/(\w)-\s+(\w)/g, "$1$2")
+      .replace(/([a-zA-Z])([A-Z])/g, "$1 $2")
+      .replace(/(\w)([A-Z][a-z])/g, "$1 $2")
+      .replace(/\s+([.,!?;:])/g, "$1")
+      .replace(/\s\s+/g, " ")
+      .trim();
   };
 
   const handleSceneSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!title || !file || !date || !description) return;
-    
+    if (!account) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet to receive a reward.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
     const formData = new FormData();
     formData.append('title', title);
     formData.append('description', description);
     formData.append('date', date);
     formData.append('file', file);
-    
+
     try {
+      // Create the scene
       const newScene = await createScene(formData);
+
+      // Send reward transaction
+      console.log("Sending reward transaction to account:", account);
+      const txId = await sendReward(account);
+
       setTitle("");
       setDate("");
       setFile(null);
@@ -78,18 +108,29 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
       setDescription("");
       setOpen(false);
       onSceneAdded();
-      
-      // Navigate to the new scene page
+
+      toast({
+        title: "Scene Submitted",
+        description: `Your scene has been submitted successfully! Reward transaction sent: ${txId}`,
+      });
       router.push(`/scene/${newScene.id}`);
     } catch (error) {
-      console.error("Error creating scene:", error);
+      console.error("Error in scene submission or reward:", error);
+      toast({
+        title: "Submission Error",
+        description: rewardError || "Failed to create the scene or send reward. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+  
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className='text-2xl p-8 rounded-lg'>Submit Scene Evidence</Button>
+        <Button className="text-2xl p-8 rounded-lg">Submit Scene Evidence</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -112,7 +153,7 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
             onChange={(e) => setDate(e.target.value)}
             required
           />
-          <input
+          <Input
             type="file"
             accept="image/*"
             onChange={(e) => {
@@ -127,7 +168,6 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
                 setDescription("");
               }
             }}
-            className='block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400'
             required
           />
           {image && (
@@ -139,17 +179,36 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
           )}
           {file && !description && (
             <Button type="button" onClick={classifyImage} disabled={classifying}>
-              {classifying ? "Classifying..." : "Classify Image"}
+              {classifying ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Classifying...
+                </>
+              ) : (
+                "Classify Image"
+              )}
             </Button>
           )}
           {description && (
-            <div className='max-h-[15rem] overflow-auto'>
+            <div className="max-h-[15rem] overflow-auto">
               <h3 className="font-semibold mb-2">Image Description:</h3>
-              <p>{description}</p>
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={5}
+                className="w-full"
+              />
             </div>
           )}
-          <Button type="submit" disabled={!title || !file || !date || !description}>
-            Create Scene
+          <Button type="submit" disabled={isSubmitting || !title || !file || !date || !description}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating Scene...
+              </>
+            ) : (
+              "Create Scene"
+            )}
           </Button>
         </form>
       </DialogContent>
