@@ -11,7 +11,6 @@ import { Loader2 } from "lucide-react";
 import { useSendRewardTransaction } from '@/app/hooks/useSendRewardTransaction';
 
 
-
 export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
@@ -100,8 +99,8 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
       const newScene = await createScene(formData);
 
       // Send reward transaction
-      console.log("Sending reward transaction to account:", account);
-      const txId = await sendReward(account);
+      // console.log("Sending reward transaction to account:", account);
+      // const txId = await sendReward(account);
 
       setTitle("");
       setDate("");
@@ -113,7 +112,7 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
 
       toast({
         title: "Scene Submitted",
-        description: `Your scene has been submitted successfully! Reward transaction sent: ${txId}`,
+        description: `Your scene has been submitted successfully!`,
       });
       router.push(`/scene/${newScene.id}`);
     } catch (error) {
@@ -192,7 +191,7 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
             </Button>
           )}
           {description && (
-            <div className='max-h-[15rem] overflow-auto'>
+            <div className="max-h-[15rem] overflow-auto">
               <h3 className="font-semibold mb-2">Image Description:</h3>
               <Textarea
                 value={description}

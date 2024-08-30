@@ -42,11 +42,8 @@
     "scikit-learn": "^0.1.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
-<<<<<<< HEAD
     "thor-devkit": "^2.0.9",
-=======
     "urql": "^4.1.0",
->>>>>>> 49952ad6a6154759186a0bf2dc4f73223b40d547
     "zod": "^3.23.8"
   },
   "devDependencies": {
