@@ -10,6 +10,7 @@ import { useWallet } from "@vechain/dapp-kit-react";
 import { Loader2 } from "lucide-react";
 import { useSendRewardTransaction } from '@/app/hooks/useSendRewardTransaction';
 
+
 export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");

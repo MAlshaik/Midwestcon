@@ -45,6 +45,9 @@ export function Landing({ userName }: { userName: string | undefined }) {
     <main className="flex flex-col items-center min-h-screen">
       <div className="w-full max-w-6xl px-4 py-8 flex flex-col items-center justify-center">
         <div className="mb-8">
+          <img src="/templogo.jpg" alt="Temporary Logo" className="w-32 h-32 object-contain mb-4" />
+        </div>
+        <div className="mb-8">
           <AddSceneDialog onSceneAdded={fetchScenes} />
         </div>
         <h2 className="text-3xl font-bold mb-6">Your Scenes</h2>
