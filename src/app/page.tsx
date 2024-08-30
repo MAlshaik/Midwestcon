@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { Navbar } from "@/components/main/navbar";
 import { Landing } from "@/components/main/landing";
 import ImageClassifier from "@/components/ui/imageClassifier";
+import ExampleComponent from "@/components/main/ExampleComponent";
 
 export default async function Home() {
   const supabase = createClient();
@@ -13,6 +14,7 @@ export default async function Home() {
       <Navbar userName={userName} />
       <div className="flex-grow">
         <Landing userName={userName} />
+        <ExampleComponent />
       </div>
     </div>
   );
