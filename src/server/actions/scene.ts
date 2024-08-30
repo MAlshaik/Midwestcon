@@ -5,6 +5,7 @@ import { db } from '@/server/db';
 import { scenes } from '@/server/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { Scene } from '../db/types';
 
 
 export async function createScene(formData: FormData) {
@@ -66,7 +67,7 @@ export async function createScene(formData: FormData) {
 }
 
 
-export async function getScenes() {
+export async function getScenes(): Promise<Scene[]>  {
   const supabase = createClient();
 
   try {

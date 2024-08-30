@@ -5,16 +5,7 @@ import { getScenes } from "@/server/actions/scene";
 import { AddSceneDialog } from "./addSceneDialog";
 import { ResultDisplay } from "./resultDisplay";
 import Link from 'next/link';
-
-interface Scene {
-  id: string;
-  title: string;
-  description: string | null;
-  imageUrl: string | null;
-  date: string | null;
-  userId: string;
-  createdAt: Date | null;
-}
+import { Scene } from "@/server/db/types";
 
 export function Landing({ userName }: { userName: string | undefined }) {
   const [scenes, setScenes] = useState<Scene[]>([]);
