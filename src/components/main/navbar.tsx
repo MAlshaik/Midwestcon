@@ -42,12 +42,12 @@ export function Navbar({ userName }: { userName: string | undefined }) {
             {!userName ? (
               <Button onClick={() => router.push('/auth/register')} className="mr-2">Login</Button>
             ) : (
-              <>
+              <div className="flex gap-2">
                 <MetaMaskProvider debug={false} sdkOptions={sdkOptions}>
                  <ConnectWalletButton />
                 </MetaMaskProvider>
                 <Button onClick={handleLogout}>Logout</Button>
-              </>
+              </div>
             )}
           </div>
         </div>
