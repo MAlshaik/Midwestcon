@@ -47,40 +47,7 @@ export default function RegisterForm() {
         return () => subscription.unsubscribe();
     }, []);
 
-    const handleSubmit = async () => {
-        const res = await register(email, password);
-        setMessage(res || ''); 
-        if (res) {
-            toast.error(res, {
-                duration: 4000, 
-                position: 'bottom-right', 
-                style: {
-                    border: '2px solid #333',
-                    color: '#fff',
-                    backgroundColor: '#333',
-                },
-            });
-        } else {
-            console.log("registered successfully")
-            toast.success('Registered successfully', {
-                duration: 4000, 
-                position: 'bottom-right', 
-                style: {
-                    border: '2px solid #333',
-                    color: '#fff',
-                    backgroundColor: '#333',
-                }, 
-            });
-            router.push('/connect-wallet');
-        }
-    }
-
-    if (user && !veChainAddress) {
-        router.push('/connect-wallet');
-        return null;
-    }
-
-    return (
+        return (
         <Card className="flex flex-col bg-background mx-auto border-none max-w-sm">
             <CardHeader>
                 <CardTitle className="text-2xl text-center"></CardTitle>
