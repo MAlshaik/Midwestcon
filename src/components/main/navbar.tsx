@@ -3,30 +3,24 @@
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/server/actions/auth";
-import ConnectWallet from "./connectWallet";
-import { useSDK, MetaMaskProvider } from "@metamask/sdk-react";
+import { useSDK } from "@metamask/sdk-react";
 import { formatAddress } from "@/lib/utils";
 import { ConnectWalletButton } from "../ui/connectWalletButton";
 
 export function Navbar({ userName }: { userName: string | undefined }) {
   const router = useRouter();
-  const host = typeof window !== "undefined" ? window.location.host : "defaultHost";
+  const { sdk, connected } = useSDK();
 
-  console.log("host", host);
-
-
-  const sdkOptions = {
-    logging: { developerMode: true },
-    checkInstallationImmediately: false,
-    dappMetadata: {
-      name: "Next-Metamask-Boilerplate",
-      url: "http://localhost:3000", // using the host constant defined above
-    },
-  };
-
-  
   const handleLogout = async () => {
     await logout();
+  }
+
+  const connectWallet = async () => {
+    try {
+      await sdk?.connect();
+    } catch (err) {
+      console.error("Failed to connect", err);
+    }
   }
 
   return (
@@ -42,12 +36,10 @@ export function Navbar({ userName }: { userName: string | undefined }) {
             {!userName ? (
               <Button onClick={() => router.push('/auth/register')} className="mr-2">Login</Button>
             ) : (
-              <div className="flex gap-2">
-                <MetaMaskProvider debug={false} sdkOptions={sdkOptions}>
-                 <ConnectWalletButton />
-                </MetaMaskProvider>
-                <Button onClick={handleLogout}>Logout</Button>
-              </div>
+            <div className="flex gap-2">
+            <ConnectWalletButton />
+            <Button onClick={handleLogout}>Logout</Button>
+            </div>
             )}
           </div>
         </div>

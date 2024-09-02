@@ -143,12 +143,16 @@ export default config;
     "lint": "next lint"
   },
   "dependencies": {
+    "@metamask/sdk-react": "^0.28.0",
     "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-icons": "^1.3.0",
+    "@radix-ui/react-popover": "^1.1.1",
     "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-toast": "^1.2.1",
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.45.2",
     "@t3-oss/env-nextjs": "^0.11.1",
+    "@urql/core": "3.2.2",
     "@vechain/connex": "^1.4.2",
     "@vechain/dapp-kit-react": "^1.0.13",
     "again": "^0.0.1",
@@ -171,8 +175,11 @@ export default config;
     "react-dom": "^18",
     "react-hot-toast": "^2.4.1",
     "react-icons": "^5.3.0",
+    "scikit-learn": "^0.1.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
+    "thor-devkit": "^2.0.9",
+    "urql": "^4.1.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -348,6 +355,115 @@ next-env.d.ts
 
 ```
 
+# subgraph files /testgraph.sol
+
+```sol
+// SPDX-License-Identifier: GPL-3.0
+
+pragma solidity ^0.8.18;
+
+contract testContract {
+    uint256 value;
+
+    // Define an event to log when the value changes
+    event ValueChanged(uint256 newValue);
+
+    constructor(uint256 _p) {
+        value = _p;
+        emit ValueChanged(_p);  // Emit event in constructor
+    }
+
+    function setP(uint256 _n) payable public {
+        value = _n;
+        emit ValueChanged(_n);  // Emit event when value is updated
+    }
+
+    function setNP(uint256 _n) public {
+        value = _n;
+        emit ValueChanged(_n);  // Emit event when value is updated
+    }
+
+    function get() view public returns (uint256) {
+        return value;
+    }
+}
+
+```
+
+# subgraph files /abi.json
+
+```json
+[
+    {
+            "inputs": [
+                    {
+                            "internalType": "uint256",
+                            "name": "_n",
+                            "type": "uint256"
+                    }
+            ],
+            "name": "setNP",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+    },
+    {
+            "inputs": [
+                    {
+                            "internalType": "uint256",
+                            "name": "_n",
+                            "type": "uint256"
+                    }
+            ],
+            "name": "setP",
+            "outputs": [],
+            "stateMutability": "payable",
+            "type": "function"
+    },
+{
+    "inputs": [
+            {
+                    "internalType": "uint256",
+                    "name": "_p",
+                    "type": "uint256"
+            }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+},
+{
+    "inputs": [],
+    "name": "get",
+    "outputs": [
+            {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+            }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+},
+{
+    "anonymous": false,
+    "inputs": [
+            {
+                    "indexed": false,
+                    "internalType": "uint256",
+                    "name": "newValue",
+                    "type": "uint256"
+            }
+    ],
+    "name": "ValueChanged",
+    "type": "event"
+}
+]
+                    
+                    
+                    
+
+```
+
 # src/env.js
 
 ```js
@@ -402,6 +518,10 @@ export const env = createEnv({
 
 This is a file of the type: SVG Image
 
+# public/templogo.jpg
+
+This is a binary file of the type: Image
+
 # public/next.svg
 
 This is a file of the type: SVG Image
@@ -409,6 +529,12 @@ This is a file of the type: SVG Image
 # public/google.svg
 
 This is a file of the type: SVG Image
+
+# drizzle/0005_dizzy_arachne.sql
+
+```sql
+ALTER TABLE "midwestcon_scenes" ADD COLUMN "reward_pending" boolean DEFAULT false;
+```
 
 # drizzle/0004_keen_silver_sable.sql
 
@@ -492,120 +618,6 @@ export interface AccountData {
 
 ```
 
-# src/lib/utils.ts
-
-```ts
-import { type ClassValue, clsx } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
-
-```
-
-# src/lib/classifier.ts
-
-```ts
-
-import { OpenAI } from "openai";
-
-import { OpenAIStream } from "ai";
-
-
-
-// create a new OpenAI client using our key from earlier
-
-const openAi = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-
-
-export const classifyImage = async (file: File) => {
-
-  // encode our file as a base64 string so it can be sent in an HTTP request
-
-  const encoded = await file
-
-    .arrayBuffer()
-
-    .then((buffer) => Buffer.from(buffer).toString("base64"));
-
-
-
-  // create an OpenAI request with a prompt
-
-  const completion = await openAi.chat.completions.create({
-
-    model: "gpt-4o",
-
-    messages: [
-
-      {
-
-        role: "user",
-
-        content: [
-
-          {
-
-            type: "text",
-
-            text: "Describe this image as if you were trying to find evidence for a crime scene. very serious, concise, and straightforward tone",
-
-          },
-
-          {
-
-            type: "image_url",
-
-            image_url: {
-
-              url: `data:image/jpeg;base64,${encoded}`,
-
-            },
-
-          },
-
-        ],
-
-      },
-
-    ],
-
-    stream: true,
-
-    max_tokens: 1000,
-
-  });
-
-
-
-  // stream the response
-
-  return OpenAIStream(completion);
-
-};
-```
-
-# src/server/helpers.ts
-
-```ts
-import { headers } from "next/headers";
-
-/**
- * Get the correct URL for the environment
- * @returns {string} The full URL for the current environment
- */
-export const getURL = (path = '') => {
-    const headersList = headers();
-    const host = headersList.get('host') || headersList.get('x-forwarded-host');
-
-    const base = process.env.NEXT_PUBLIC_SITE_URL?.includes('localhost') ? 'http' : 'https';
-
-    return `${base}://${host}${path}`;
-};
-```
-
 # src/utils/useMousePosition.tsx
 
 ```tsx
@@ -661,6 +673,43 @@ export const useOutsideClick = (
   }, [ref, callback]);
 };
 
+
+```
+
+# src/utils/rewardTransaction.tsx
+
+```tsx
+"use client"
+
+import { useConnex } from '@vechain/dapp-kit-react';
+import { unitsUtils, clauseBuilder } from '@vechain/sdk-core';
+
+export function useSendRewardTransaction() {
+  console.log("useSendRewardTransaction called");
+  const connex = useConnex();
+
+  console.log("useSendRewardTransaction connex", connex);
+
+  const sendReward = async (recipientAddress: string) => {
+    console.log("Sending reward to:", recipientAddress);
+    const REWARD_AMOUNT = '1'; // 1 VET as reward
+    const rewardClause = clauseBuilder.transferVET(
+      recipientAddress,
+      unitsUtils.parseVET(REWARD_AMOUNT)
+    );
+    console.log("Reward clause", rewardClause);
+    try {
+      const { txid } = await connex.vendor.sign('tx', [rewardClause]).request();
+      console.log(`Reward transaction sent: ${txid}`);
+      return txid;
+    } catch (error) {
+      console.error('Error sending reward:', error);
+      throw error;
+    }
+  };
+
+  return sendReward;
+}
 
 ```
 
@@ -728,6 +777,121 @@ export function cn(...inputs: ClassValue[]) {
 
 ```
 
+# src/server/helpers.ts
+
+```ts
+import { headers } from "next/headers";
+
+/**
+ * Get the correct URL for the environment
+ * @returns {string} The full URL for the current environment
+ */
+export const getURL = (path = '') => {
+    const headersList = headers();
+    const host = headersList.get('host') || headersList.get('x-forwarded-host');
+
+    const base = process.env.NEXT_PUBLIC_SITE_URL?.includes('localhost') ? 'http' : 'https';
+
+    return `${base}://${host}${path}`;
+};
+```
+
+# src/lib/utils.ts
+
+```ts
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+export const formatBalance = (rawBalance: string) => {
+  const balance = (parseInt(rawBalance) / 1000000000000000000).toFixed(2);
+  return balance;
+};
+
+export const formatChainAsNum = (chainIdHex: string) => {
+  const chainIdNum = parseInt(chainIdHex);
+  return chainIdNum;
+};
+
+export const formatAddress = (addr: string | undefined) => {
+  return `${addr?.substring(0, 8)}...`;
+};
+
+```
+
+# src/lib/comparison.ts
+
+```ts
+import { OpenAI } from "openai";
+
+// create a new OpenAI client using our key from earlier
+const openAi = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+export const compareScenes = async (descriptions: string[]): Promise<string> => {
+  // create an OpenAI request with a prompt
+  const completion = await openAi.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "user",
+        content: `Compare the following crime scenes and write a report in a police styled report of the similarities of the crime scenes and what that could entail: ${descriptions.join(", ")}`,
+      },
+    ],
+    max_tokens: 1000,
+  });
+
+  // return the response
+  return completion.choices[0]?.message?.content || "No report generated";
+};
+```
+
+# src/lib/classifier.ts
+
+```ts
+import { OpenAI } from "openai";
+
+// create a new OpenAI client using our key from earlier
+const openAi = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+export const classifyImage = async (file: File): Promise<string> => {
+  // encode our file as a base64 string so it can be sent in an HTTP request
+  const encoded = await file
+    .arrayBuffer()
+    .then((buffer) => Buffer.from(buffer).toString("base64"));
+
+  // create an OpenAI request with a prompt
+  const completion = await openAi.chat.completions.create({
+
+    model: "gpt-4o",
+
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: "Describe this image as if you were trying to find evidence for a crime scene. very serious, concise, and straightforward tone",
+          },
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:image/jpeg;base64,${encoded}`,
+            },
+          },
+        ],
+      },
+    ],
+    max_tokens: 1000,
+  });
+
+  // return the response
+  return completion.choices[0]?.message?.content || "No response generated";
+};
+```
+
 # src/app/page.tsx
 
 ```tsx
@@ -735,6 +899,7 @@ import { createClient } from "@/utils/supabase/server";
 import { Navbar } from "@/components/main/navbar";
 import { Landing } from "@/components/main/landing";
 import ImageClassifier from "@/components/ui/imageClassifier";
+import ExampleComponent from "@/components/main/ExampleComponent";
 
 export default async function Home() {
   const supabase = createClient();
@@ -746,6 +911,7 @@ export default async function Home() {
       <Navbar userName={userName} />
       <div className="flex-grow">
         <Landing userName={userName} />
+        <ExampleComponent />
       </div>
     </div>
   );
@@ -760,6 +926,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import dynamic from 'next/dynamic';
+import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -778,6 +945,7 @@ export default function RootLayout({
       <body className={`dark ${inter.className}`}>
         <DAppKitProviderWrapper>
           {children}
+        <Toaster />
         </DAppKitProviderWrapper>
       </body>
     </html>
@@ -929,88 +1097,6 @@ export const INVITE_CODE = 'invite_code';
 
 ```
 
-# src/server/db/schema.ts
-
-```ts
-import {
-  pgTableCreator,
-  uuid,
-  pgSchema,
-  varchar,
-  jsonb,
-  text,
-  timestamp,
-  date,
-} from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
-
-export const createTable = pgTableCreator((name) => `midwestcon_${name}`);
-
-const authSchema = pgSchema("auth");
-
-export const users = authSchema.table("users", {
-  id: uuid("id").primaryKey(),
-  email: varchar("email").notNull(),
-  raw_user_meta_data: jsonb("raw_user_meta_data").notNull(),
-});
-
-export const userProfiles = createTable("user_profiles", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  veChainAddress: varchar("vechain_address", { length: 42 }),
-});
-
-export const userRelations = relations(users, ({ many, one }) => ({
-  scenes: many(scenes),
-  profile: one(userProfiles, {
-    fields: [users.id],
-    references: [userProfiles.userId],
-  }),
-}));
-
-export const scenes = createTable("scenes", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  title: text("title").notNull(),
-  description: text("description"),
-  imageUrl: text("image_url"),
-  createdAt: timestamp("created_at").defaultNow(),
-  date: date("date"),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-});
-
-export const sceneRelations = relations(scenes, ({ one }) => ({
-  user: one(users, {
-    fields: [scenes.userId],
-    references: [users.id],
-  }),
-}));
-
-```
-
-# src/server/db/index.ts
-
-```ts
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-
-import { env } from "@/env";
-import * as schema from "./schema";
-
-/**
- * Cache the database connection in development. This avoids creating a new connection on every HMR
- * update.
- */
-const globalForDb = globalThis as unknown as {
-  conn: postgres.Sql | undefined;
-};
-
-const conn = globalForDb.conn ?? postgres(env.DATABASE_URL);
-if (env.NODE_ENV !== "production") globalForDb.conn = conn;
-
-export const db = drizzle(conn, { schema });
-
-```
-
 # drizzle/meta/_journal.json
 
 ```json
@@ -1052,8 +1138,184 @@ export const db = drizzle(conn, { schema });
       "when": 1724731758468,
       "tag": "0004_keen_silver_sable",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1724812762977,
+      "tag": "0005_dizzy_arachne",
+      "breakpoints": true
     }
   ]
+}
+```
+
+# drizzle/meta/0005_snapshot.json
+
+```json
+{
+  "id": "40c01402-a28d-4798-a392-7014aeed8835",
+  "prevId": "3c5ceffa-9af6-40df-9497-c53a6e84296c",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.midwestcon_scenes": {
+      "name": "midwestcon_scenes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reward_pending": {
+          "name": "reward_pending",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "midwestcon_scenes_user_id_users_id_fk": {
+          "name": "midwestcon_scenes_user_id_users_id_fk",
+          "tableFrom": "midwestcon_scenes",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.midwestcon_user_profiles": {
+      "name": "midwestcon_user_profiles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vechain_address": {
+          "name": "vechain_address",
+          "type": "varchar(42)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "midwestcon_user_profiles_user_id_users_id_fk": {
+          "name": "midwestcon_user_profiles_user_id_users_id_fk",
+          "tableFrom": "midwestcon_user_profiles",
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "auth.users": {
+      "name": "users",
+      "schema": "auth",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_user_meta_data": {
+          "name": "raw_user_meta_data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
 }
 ```
 
@@ -1616,6 +1878,100 @@ export const db = drizzle(conn, { schema });
 }
 ```
 
+# src/server/db/types.ts
+
+```ts
+import { InferSelectModel } from 'drizzle-orm';
+import { scenes } from './schema';
+
+export type Scene = InferSelectModel<typeof scenes>
+```
+
+# src/server/db/schema.ts
+
+```ts
+import {
+  pgTableCreator,
+  uuid,
+  pgSchema,
+  varchar,
+  jsonb,
+  text,
+  timestamp,
+  boolean,
+  date,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+
+export const createTable = pgTableCreator((name) => `midwestcon_${name}`);
+
+const authSchema = pgSchema("auth");
+
+export const users = authSchema.table("users", {
+  id: uuid("id").primaryKey(),
+  email: varchar("email").notNull(),
+  raw_user_meta_data: jsonb("raw_user_meta_data").notNull(),
+});
+
+export const userProfiles = createTable("user_profiles", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  veChainAddress: varchar("vechain_address", { length: 42 }),
+});
+
+export const userRelations = relations(users, ({ many, one }) => ({
+  scenes: many(scenes),
+  profile: one(userProfiles, {
+    fields: [users.id],
+    references: [userProfiles.userId],
+  }),
+}));
+
+export const scenes = createTable("scenes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  date: date("date"),
+  rewardPending: boolean("reward_pending").default(false),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+
+});
+
+export const sceneRelations = relations(scenes, ({ one }) => ({
+  user: one(users, {
+    fields: [scenes.userId],
+    references: [users.id],
+  }),
+}));
+
+```
+
+# src/server/db/index.ts
+
+```ts
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+
+import { env } from "@/env";
+import * as schema from "./schema";
+
+/**
+ * Cache the database connection in development. This avoids creating a new connection on every HMR
+ * update.
+ */
+const globalForDb = globalThis as unknown as {
+  conn: postgres.Sql | undefined;
+};
+
+const conn = globalForDb.conn ?? postgres(env.DATABASE_URL);
+if (env.NODE_ENV !== "production") globalForDb.conn = conn;
+
+export const db = drizzle(conn, { schema });
+
+```
+
 # src/server/actions/scene.ts
 
 ```ts
@@ -1623,9 +1979,11 @@ export const db = drizzle(conn, { schema });
 
 import { createClient } from '@/utils/supabase/server';
 import { db } from '@/server/db';
-import { scenes, users } from '@/server/db/schema';
+import { scenes } from '@/server/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { Scene } from '../db/types';
+
 
 export async function createScene(formData: FormData) {
   const supabase = createClient();
@@ -1638,34 +1996,33 @@ export async function createScene(formData: FormData) {
     throw new Error('Title and file are required');
   }
 
-  // Parse the date string into a Date object
   const date = dateStr ? new Date(dateStr) : new Date();
-
-  // Format the date as an ISO string (YYYY-MM-DD)
   const formattedDate = date.toISOString().split('T')[0];
 
   try {
-    // Get the current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       throw new Error('User not authenticated');
     }
 
+    // Generate a unique filename
+    const fileName = `${Date.now()}_${file.name}`;
+
     // Upload file to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase
       .storage
       .from('scene-images')
-      .upload(`${Date.now()}_${file.name}`, file);
+      .upload(fileName, file);
 
     if (uploadError) {
       throw new Error(uploadError.message);
     }
 
-    // Get public URL of the uploaded file
+    // Get the public URL of the uploaded file
     const { data: { publicUrl } } = supabase
       .storage
       .from('scene-images')
-      .getPublicUrl(uploadData.path);
+      .getPublicUrl(fileName);
 
     // Create new scene in the database
     const [newScene] = await db.insert(scenes).values({
@@ -1673,10 +2030,12 @@ export async function createScene(formData: FormData) {
       description,
       imageUrl: publicUrl,
       userId: user.id,
-      date: sql`${formattedDate}::date`, // Use SQL template literal to ensure proper date formatting
+      date: sql`${formattedDate}::date`,
     }).returning();
 
+    // Revalidate the path to update the UI
     revalidatePath('/');
+
     return newScene;
   } catch (error: any) {
     console.error('Error in createScene:', error);
@@ -1685,7 +2044,7 @@ export async function createScene(formData: FormData) {
 }
 
 
-export async function getScenes() {
+export async function getScenes(): Promise<Scene[]>  {
   const supabase = createClient();
 
   try {
@@ -1725,6 +2084,89 @@ export async function getSceneDetails(sceneId: string) {
   return data;
 }
 
+
+```
+
+# src/server/actions/reward.ts
+
+```ts
+import { Transaction, secp256k1, address } from 'thor-devkit';
+import { unitsUtils } from '@vechain/sdk-core';
+import axios from 'axios';
+
+export async function sendTestnetFunds(recipientAddress: string, amount: string) {
+
+  const TESTNET_URL = 'https://testnet.vechain.org/';
+  const FAUCET_PRIVATE_KEY = process.env.FAUCET_PRIVATE_KEY; // We'll set this up
+
+  if (!FAUCET_PRIVATE_KEY) {
+        throw new Error('FAUCET_PRIVATE_KEY is not set in environment variables');
+  }
+
+  const privateKey = Buffer.from(FAUCET_PRIVATE_KEY.replace(/^0x/, ''), 'hex');
+  const publicKey = secp256k1.derivePublicKey(privateKey);
+  const senderAddress = address.fromPublicKey(publicKey);
+
+  const { data: bestBlock } = await axios.get(`${TESTNET_URL}/blocks/best`);
+  const blockRef = bestBlock.id.slice(0, 18);
+  const { data: genesisBlock } = await axios.get(`${TESTNET_URL}/blocks/0`);
+  const chainTag = parseInt(genesisBlock.id.slice(-2), 16);
+
+  const body: Transaction.Body = {
+    chainTag,
+    blockRef,
+    expiration: 32,
+    clauses: [{
+      to: recipientAddress,
+      value: unitsUtils.parseVET(amount).toString(),
+      data: '0x'
+    }],
+    gasPriceCoef: 0,
+    gas: 21000,
+    dependsOn: null,
+    nonce: '0x' + Math.random().toString().slice(2, 10),
+  };
+
+  const tx = new Transaction(body);
+  const signingHash = tx.signingHash();
+  const signature = secp256k1.sign(signingHash, privateKey);
+  tx.signature = signature;
+
+  const raw = tx.encode();
+
+  try {
+    const response = await axios.post(`${TESTNET_URL}/transactions`, {
+      raw: '0x' + raw.toString('hex')
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('Transaction response:', response.data);
+    return response.data.id;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Error sending test transaction:', error.response?.data || error.message);
+    } else {
+      console.error('Error sending test transaction:', error);
+    }
+    throw error;
+  }
+ 
+}
+
+export async function sendRewardTransaction(recipientAddress: string) {
+  try {
+    const REWARD_AMOUNT = '1'; // 1 VET as reward
+    const txid = await sendTestnetFunds(recipientAddress, REWARD_AMOUNT);
+    console.log(`Reward transaction sent: ${txid}`);
+    return txid;
+  } catch (error) {
+    console.error('Error sending reward:', error);
+    throw error;
+  }
+}
 
 ```
 
@@ -2117,6 +2559,1182 @@ export function createClient() {
 }
 ```
 
+# src/app/auth/default.tsx
+
+```tsx
+export default function AuthDefault() {
+    return null;
+}
+```
+
+# src/app/hooks/useSendRewardTransaction.ts
+
+```ts
+import { useState } from 'react';
+
+export function useSendRewardTransaction() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const sendReward = async (recipientAddress: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/send-reward', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ recipientAddress }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send reward');
+      }
+      
+      const { txid } = await response.json();
+      console.log(`Reward transaction sent: ${txid}`);
+      return txid;
+    } catch (error) {
+      console.error('Error sending reward:', error);
+      setError(error instanceof Error ? error.message : 'Unknown error');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { sendReward, isLoading, error };
+}
+
+```
+
+# src/components/main/resultDisplay.tsx
+
+```tsx
+import React from 'react';
+import { cleanResponse } from '../ui/imageClassifier';
+
+interface ResultDisplayProps {
+  result: string;
+  onBack: () => void;
+}
+
+export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onBack }) => {
+  result = cleanResponse(result);
+  return (
+    <div className="w-full max-w-4xl mt-8 p-4 rounded-lg shadow">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-2xl font-semibold">Comparison Result:</h3>
+        <button
+          onClick={onBack}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Back to Scenes
+        </button>
+      </div>
+      <pre className="whitespace-pre-wrap  p-4 rounded">{result}</pre>
+    </div>
+  );
+};
+
+```
+
+# src/components/main/navbar.tsx
+
+```tsx
+'use client';
+
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { logout } from "@/server/actions/auth";
+import ConnectWallet from "./connectWallet";
+import { useSDK, MetaMaskProvider } from "@metamask/sdk-react";
+import { formatAddress } from "@/lib/utils";
+import { ConnectWalletButton } from "../ui/connectWalletButton";
+
+export function Navbar({ userName }: { userName: string | undefined }) {
+  const router = useRouter();
+  const host = typeof window !== "undefined" ? window.location.host : "defaultHost";
+
+  console.log("host", host);
+
+
+  const sdkOptions = {
+    logging: { developerMode: true },
+    checkInstallationImmediately: false,
+    dappMetadata: {
+      name: "Next-Metamask-Boilerplate",
+      url: "http://localhost:3000", // using the host constant defined above
+    },
+  };
+
+  
+  const handleLogout = async () => {
+    await logout();
+  }
+
+  return (
+    <nav className="bg-background border-b">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex">
+            <div className="flex-shrink-0 flex items-center">
+              <span className="text-xl font-bold">Criminal Scenes</span>
+            </div>
+          </div>
+          <div className="flex items-center">
+            {!userName ? (
+              <Button onClick={() => router.push('/auth/register')} className="mr-2">Login</Button>
+            ) : (
+              <div className="flex gap-2">
+                <MetaMaskProvider debug={false} sdkOptions={sdkOptions}>
+                 <ConnectWalletButton />
+                </MetaMaskProvider>
+                <Button onClick={handleLogout}>Logout</Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+```
+
+# src/components/main/landing.tsx
+
+```tsx
+"use client"
+
+import { useState, useEffect } from "react";
+import { getScenes } from "@/server/actions/scene";
+import { AddSceneDialog } from "./addSceneDialog";
+import { ResultDisplay } from "./resultDisplay";
+import Link from 'next/link';
+import { Scene } from "@/server/db/types";
+
+export function Landing({ userName }: { userName: string | undefined }) {
+  const [scenes, setScenes] = useState<Scene[]>([]);
+  const [selectedScenes, setSelectedScenes] = useState<Scene[]>([]);
+  const [comparisonResult, setComparisonResult] = useState<string | null>(null);
+  const [isCompareMode, setIsCompareMode] = useState(false);
+
+  const fetchScenes = async () => {
+    try {
+      const fetchedScenes = await getScenes();
+      setScenes(fetchedScenes);
+    } catch (error) {
+      console.error("Error fetching scenes:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchScenes();
+  }, []);
+
+  const toggleSceneSelection = (scene: Scene) => {
+    setSelectedScenes(prevSelected => 
+      prevSelected.some(s => s.id === scene.id)
+        ? prevSelected.filter(s => s.id !== scene.id)
+        : [...prevSelected, scene]
+    );
+  };
+
+  const sendSelectedScenes = async () => {
+    const descriptions = selectedScenes.map(scene => scene.description).filter(Boolean) as string[];
+
+    try {
+      const res = await fetch("/api/compare", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ descriptions }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const responseText = await res.text();
+      setComparisonResult(responseText);
+    } catch (error) {
+      console.error("Error comparing scenes:", error);
+      setComparisonResult("An error occurred while comparing scenes.");
+    }
+  };
+
+  const handleBackToLanding = () => {
+    setComparisonResult(null);
+    setIsCompareMode(false);
+    setSelectedScenes([]);
+  };
+
+  if (!userName) {
+    return (
+      <main className="flex flex-col justify-center items-center min-h-screen">
+        <h1 className="text-4xl font-bold mb-4">Welcome to Scene Creator</h1>
+        <p className="text-xl">Please log in to start creating scenes.</p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="flex flex-col items-center min-h-screen">
+      <div className="w-full max-w-6xl px-4 py-8 flex flex-col items-center justify-center">
+        {comparisonResult ? (
+          <ResultDisplay result={comparisonResult} onBack={handleBackToLanding} />
+        ) : (
+          <>
+            <div className="mb-8">
+              <img src="/templogo.jpg" alt="Temporary Logo" className="w-32 h-32 object-contain mb-4" />
+            </div>
+            <div className="mb-8">
+              <AddSceneDialog onSceneAdded={fetchScenes} />
+            </div>
+            <h2 className="text-3xl font-bold mb-6">Your Scenes</h2>
+            <div className="mb-4 flex space-x-4">
+              {!isCompareMode && (
+                <button 
+                  onClick={() => setIsCompareMode(true)}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  Compare Scenes
+                </button>
+              )}
+              {isCompareMode && (
+                <>
+                  <button 
+                    onClick={sendSelectedScenes}
+                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                    disabled={selectedScenes.length < 2}
+                  >
+                    Confirm Compare
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setIsCompareMode(false);
+                      setSelectedScenes([]);
+                    }}
+                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {scenes.map((scene) => (
+                <div key={scene.id} className="relative">
+                  <Link href={`/scene/${scene.id}`} className="block">
+                    <div className={`border rounded-lg shadow-md overflow-hidden transition-transform duration-200 ease-in-out hover:scale-105 ${
+                      isCompareMode && selectedScenes.some(s => s.id === scene.id) ? 'border-blue-500 border-2' : ''
+                    }`}>
+                      {scene.imageUrl && (
+                        <img src={scene.imageUrl} alt={scene.title} className="w-full h-48 object-cover" />
+                      )}
+                      <div className="p-4 bg-[#2C3755]">
+                        <h3 className="text-xl font-semibold mb-2">{scene.title}</h3>
+                        {scene.description && (
+                          <p className="mb-2 line-clamp-2">{scene.description}</p>
+                        )}
+                        {scene.date && (
+                          <p className="text-sm">Date: {new Date(scene.date).toLocaleDateString()}</p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                  {isCompareMode && (
+                    <div 
+                      className="absolute top-2 right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center cursor-pointer z-10"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleSceneSelection(scene);
+                      }}
+                    >
+                      <input 
+                        type="checkbox" 
+                        checked={selectedScenes.some(s => s.id === scene.id)}
+                        onChange={() => {}}
+                        className="w-4 h-4"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </main>
+  );
+}
+
+```
+
+# src/components/main/connectWallet.tsx
+
+```tsx
+'use client';
+
+import { useEffect, useState } from "react";
+import { useWallet, WalletButton, useWalletModal } from "@vechain/dapp-kit-react";
+import { Button } from "@/components/ui/button";
+import { FaWallet } from "react-icons/fa6";
+
+// You might need to create this utility function
+const humanAddress = (address: string, lengthBefore = 4, lengthAfter = 10) => {
+  const before = address.substring(0, lengthBefore)
+  const after = address.substring(address.length - lengthAfter)
+  return `${before}…${after}`
+}
+
+export const ConnectWallet = () => {
+  const { account } = useWallet();
+  const { open } = useWalletModal();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null; // or a loading placeholder
+  }
+
+  if (!account) {
+    return (
+      <Button
+        onClick={open}
+        className="bg-primary text-primary-foreground hover:bg-primary/90"
+      >
+        <FaWallet className="mr-2 h-4 w-4" /> Connect Wallet
+      </Button>
+    );
+  }
+
+  return (
+    <Button
+      onClick={open}
+      className="rounded-full bg-[rgba(235,236,252,1)] text-black hover:bg-[rgba(235,236,252,0.8)]"
+    >
+      {/* You might want to replace this with an actual icon component */}
+      <div className="mr-2 h-4 w-4 rounded-full bg-gray-300"></div>
+      <span className="font-normal">{humanAddress(account, 4, 6)}</span>
+    </Button>
+  );
+};
+
+export default ConnectWallet;
+
+```
+
+# src/components/main/addSceneDialog.tsx
+
+```tsx
+import React, { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
+import { createScene } from "@/server/actions/scene";
+import { useWallet } from "@vechain/dapp-kit-react";
+import { Loader2 } from "lucide-react";
+import { useSendRewardTransaction } from '@/app/hooks/useSendRewardTransaction';
+
+
+export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [image, setImage] = useState<string | null>(null);
+  const [description, setDescription] = useState("");
+  const [classifying, setClassifying] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const { account } = useWallet();
+  const { toast } = useToast();
+  const { sendReward, isLoading: isRewardLoading, error: rewardError } = useSendRewardTransaction();
+
+
+  const classifyImage = async () => {
+    if (!file) return;
+    setClassifying(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const response = await fetch("/api/classify", {
+        method: "POST",
+        body: formData,
+      });
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let content = "";
+
+      function processText({ done, value }: ReadableStreamReadResult<Uint8Array>): Promise<void> | void {
+        if (done) {
+          setDescription(cleanResponse(content));
+          setClassifying(false);
+          return;
+        }
+        content += decoder.decode(value, { stream: true });
+        return reader?.read().then(processText);
+      }
+
+      await reader?.read().then(processText);
+    } catch (error) {
+      console.error("Error classifying image:", error);
+      toast({
+        title: "Classification Error",
+        description: "Failed to classify the image. Please try again.",
+        variant: "destructive",
+      });
+      setClassifying(false);
+    }
+  };
+
+  const cleanResponse = (rawResponse: string) => {
+    return rawResponse
+      .replace(/^\d+:\s*/gm, "")
+      .replace(/\\n/g, "\n")
+      .replace(/"/g, "")
+      .replace(/(\w)-\s+(\w)/g, "$1$2")
+      .replace(/([a-zA-Z])([A-Z])/g, "$1 $2")
+      .replace(/(\w)([A-Z][a-z])/g, "$1 $2")
+      .replace(/\s+([.,!?;:])/g, "$1")
+      .replace(/\s\s+/g, " ")
+      .trim();
+  };
+
+  const handleSceneSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!title || !file || !date || !description) return;
+    if (!account) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet to receive a reward.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('date', date);
+    formData.append('file', file);
+
+    try {
+      // Create the scene
+      const newScene = await createScene(formData);
+
+      // Send reward transaction
+      // console.log("Sending reward transaction to account:", account);
+      // const txId = await sendReward(account);
+
+      setTitle("");
+      setDate("");
+      setFile(null);
+      setImage(null);
+      setDescription("");
+      setOpen(false);
+      onSceneAdded();
+
+      toast({
+        title: "Scene Submitted",
+        description: `Your scene has been submitted successfully!`,
+      });
+      router.push(`/scene/${newScene.id}`);
+    } catch (error) {
+      console.error("Error in scene submission or reward:", error);
+      toast({
+        title: "Submission Error",
+        description: rewardError || "Failed to create the scene or send reward. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="text-2xl p-8 rounded-lg">Submit Scene Evidence</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Submit Scene Evidence</DialogTitle>
+          <DialogDescription>
+            Upload an image and fill out the details to create a new scene.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSceneSubmit} className="grid gap-4 py-4">
+          <Input
+            type="text"
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+          <Input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+          />
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const files = e.target.files;
+              if (files?.length) {
+                setFile(files[0]);
+                setImage(URL.createObjectURL(files[0]));
+                setDescription(""); // Reset description when new image is uploaded
+              } else {
+                setFile(null);
+                setImage(null);
+                setDescription("");
+              }
+            }}
+            required
+          />
+          {image && (
+            <img
+              src={image}
+              alt="Uploaded scene"
+              className="mb-4 max-w-full h-auto"
+            />
+          )}
+          {file && !description && (
+            <Button type="button" onClick={classifyImage} disabled={classifying}>
+              {classifying ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Classifying...
+                </>
+              ) : (
+                "Classify Image"
+              )}
+            </Button>
+          )}
+          {description && (
+            <div className="max-h-[15rem] overflow-auto">
+              <h3 className="font-semibold mb-2">Image Description:</h3>
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={5}
+                className="w-full"
+              />
+            </div>
+          )}
+          <Button type="submit" disabled={isSubmitting || !title || !file || !date || !description}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating Scene...
+              </>
+            ) : (
+              "Create Scene"
+            )}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+```
+
+# src/components/main/ExampleComponent.tsx
+
+```tsx
+// // app/ExampleComponent.tsx (Client Component)
+
+// 'use client';
+
+// import React from 'react';
+// const ExampleComponent = ({ data }) => {
+//   if (!data) {
+//     return <p>Loading...</p>;
+//   }
+//   return <pre>{JSON.stringify(data, null, 2)}</pre>;
+// };
+// export default ExampleComponent;
+
+
+//just before trying to fix the reduceright error
+// 'use client';
+
+// import React, { useState } from 'react';
+// import { createClient, gql } from 'urql';
+
+// const client = createClient({
+//   url: 'https://gateway.thegraph.com/api/{api-key}/subgraphs/id/BMnKqdKs9NaXbn8VzvJmiMzUo4ogQeFw9UxnispGD11i',
+// });
+
+// const DATA_QUERY = gql`
+// {
+//   valueChangeds(first: 5) {
+//     id
+//     newValue
+//     blockNumber
+//     blockTimestamp
+//   }
+// }`;
+
+// const ExampleComponent = () => {
+//   const [data, setData] = useState(null);
+//   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState(null);
+
+//   const fetchData = async () => {
+//     setLoading(true);
+//     setError(null);
+    
+//     try {
+//       const result = await client.query(DATA_QUERY).toPromise();
+//       if (result.error) {
+//         setError(result.error.message);
+//       } else {
+//         setData(result.data);
+//       }
+//     } catch (err) {
+//       setError(err.message);
+//     }
+
+//     setLoading(false);
+//   };
+
+//   return (
+//     <div>
+//       <button onClick={fetchData} className="btn-primary">
+//         Fetch Data
+//       </button>
+//       {loading && <p>Loading...</p>}
+//       {error && <p>Error: {error}</p>}
+//       {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
+//     </div>
+//   );
+// };
+
+// export default ExampleComponent;
+
+
+'use client';
+
+import React, { useState } from 'react';
+import { createClient, gql, cacheExchange, fetchExchange } from 'urql';
+
+// URQL client setup for GraphQL queries
+const client = createClient({
+  url: 'https://gateway.thegraph.com/api/e02108768a4c298311ca08881973b9db/subgraphs/id/BMnKqdKs9NaXbn8VzvJmiMzUo4ogQeFw9UxnispGD11i',
+  exchanges: [cacheExchange, fetchExchange], // Ensure proper setup of exchanges
+});
+
+// GraphQL query definition
+const DATA_QUERY = gql`
+{
+  valueChangeds(first: 5) {
+    id
+    newValue
+    blockNumber
+    blockTimestamp
+  }
+}`;
+
+const ExampleComponent = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await client.query(DATA_QUERY).toPromise();
+      if (result.error) {
+        setError(result.error.message);
+      } else {
+        setData(result.data);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={fetchData} className="btn-primary">
+        Fetch Data
+      </button>
+      {loading && <p>Loading...</p>}
+      {error && <p>Error: {error}</p>}
+      {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
+    </div>
+  );
+};
+
+export default ExampleComponent;
+
+```
+
+# src/components/ui/use-toast.ts
+
+```ts
+"use client"
+
+// Inspired by react-hot-toast library
+import * as React from "react"
+
+import type {
+  ToastActionElement,
+  ToastProps,
+} from "@/components/ui/toast"
+
+const TOAST_LIMIT = 1
+const TOAST_REMOVE_DELAY = 1000000
+
+type ToasterToast = ToastProps & {
+  id: string
+  title?: React.ReactNode
+  description?: React.ReactNode
+  action?: ToastActionElement
+}
+
+const actionTypes = {
+  ADD_TOAST: "ADD_TOAST",
+  UPDATE_TOAST: "UPDATE_TOAST",
+  DISMISS_TOAST: "DISMISS_TOAST",
+  REMOVE_TOAST: "REMOVE_TOAST",
+} as const
+
+let count = 0
+
+function genId() {
+  count = (count + 1) % Number.MAX_SAFE_INTEGER
+  return count.toString()
+}
+
+type ActionType = typeof actionTypes
+
+type Action =
+  | {
+      type: ActionType["ADD_TOAST"]
+      toast: ToasterToast
+    }
+  | {
+      type: ActionType["UPDATE_TOAST"]
+      toast: Partial<ToasterToast>
+    }
+  | {
+      type: ActionType["DISMISS_TOAST"]
+      toastId?: ToasterToast["id"]
+    }
+  | {
+      type: ActionType["REMOVE_TOAST"]
+      toastId?: ToasterToast["id"]
+    }
+
+interface State {
+  toasts: ToasterToast[]
+}
+
+const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+
+const addToRemoveQueue = (toastId: string) => {
+  if (toastTimeouts.has(toastId)) {
+    return
+  }
+
+  const timeout = setTimeout(() => {
+    toastTimeouts.delete(toastId)
+    dispatch({
+      type: "REMOVE_TOAST",
+      toastId: toastId,
+    })
+  }, TOAST_REMOVE_DELAY)
+
+  toastTimeouts.set(toastId, timeout)
+}
+
+export const reducer = (state: State, action: Action): State => {
+  switch (action.type) {
+    case "ADD_TOAST":
+      return {
+        ...state,
+        toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
+      }
+
+    case "UPDATE_TOAST":
+      return {
+        ...state,
+        toasts: state.toasts.map((t) =>
+          t.id === action.toast.id ? { ...t, ...action.toast } : t
+        ),
+      }
+
+    case "DISMISS_TOAST": {
+      const { toastId } = action
+
+      // ! Side effects ! - This could be extracted into a dismissToast() action,
+      // but I'll keep it here for simplicity
+      if (toastId) {
+        addToRemoveQueue(toastId)
+      } else {
+        state.toasts.forEach((toast) => {
+          addToRemoveQueue(toast.id)
+        })
+      }
+
+      return {
+        ...state,
+        toasts: state.toasts.map((t) =>
+          t.id === toastId || toastId === undefined
+            ? {
+                ...t,
+                open: false,
+              }
+            : t
+        ),
+      }
+    }
+    case "REMOVE_TOAST":
+      if (action.toastId === undefined) {
+        return {
+          ...state,
+          toasts: [],
+        }
+      }
+      return {
+        ...state,
+        toasts: state.toasts.filter((t) => t.id !== action.toastId),
+      }
+  }
+}
+
+const listeners: Array<(state: State) => void> = []
+
+let memoryState: State = { toasts: [] }
+
+function dispatch(action: Action) {
+  memoryState = reducer(memoryState, action)
+  listeners.forEach((listener) => {
+    listener(memoryState)
+  })
+}
+
+type Toast = Omit<ToasterToast, "id">
+
+function toast({ ...props }: Toast) {
+  const id = genId()
+
+  const update = (props: ToasterToast) =>
+    dispatch({
+      type: "UPDATE_TOAST",
+      toast: { ...props, id },
+    })
+  const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+
+  dispatch({
+    type: "ADD_TOAST",
+    toast: {
+      ...props,
+      id,
+      open: true,
+      onOpenChange: (open) => {
+        if (!open) dismiss()
+      },
+    },
+  })
+
+  return {
+    id: id,
+    dismiss,
+    update,
+  }
+}
+
+function useToast() {
+  const [state, setState] = React.useState<State>(memoryState)
+
+  React.useEffect(() => {
+    listeners.push(setState)
+    return () => {
+      const index = listeners.indexOf(setState)
+      if (index > -1) {
+        listeners.splice(index, 1)
+      }
+    }
+  }, [state])
+
+  return {
+    ...state,
+    toast,
+    dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
+  }
+}
+
+export { useToast, toast }
+
+```
+
+# src/components/ui/toaster.tsx
+
+```tsx
+"use client"
+
+import {
+  Toast,
+  ToastClose,
+  ToastDescription,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+} from "@/components/ui/toast"
+import { useToast } from "@/components/ui/use-toast"
+
+export function Toaster() {
+  const { toasts } = useToast()
+
+  return (
+    <ToastProvider>
+      {toasts.map(function ({ id, title, description, action, ...props }) {
+        return (
+          <Toast key={id} {...props}>
+            <div className="grid gap-1">
+              {title && <ToastTitle>{title}</ToastTitle>}
+              {description && (
+                <ToastDescription>{description}</ToastDescription>
+              )}
+            </div>
+            {action}
+            <ToastClose />
+          </Toast>
+        )
+      })}
+      <ToastViewport />
+    </ToastProvider>
+  )
+}
+
+```
+
+# src/components/ui/toast.tsx
+
+```tsx
+"use client"
+
+import * as React from "react"
+import * as ToastPrimitives from "@radix-ui/react-toast"
+import { cva, type VariantProps } from "class-variance-authority"
+import { X } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+const ToastProvider = ToastPrimitives.Provider
+
+const ToastViewport = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Viewport>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Viewport>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Viewport
+    ref={ref}
+    className={cn(
+      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",
+      className
+    )}
+    {...props}
+  />
+))
+ToastViewport.displayName = ToastPrimitives.Viewport.displayName
+
+const toastVariants = cva(
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+  {
+    variants: {
+      variant: {
+        default: "border bg-background text-foreground",
+        destructive:
+          "destructive group border-destructive bg-destructive text-destructive-foreground",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+const Toast = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Root>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
+    VariantProps<typeof toastVariants>
+>(({ className, variant, ...props }, ref) => {
+  return (
+    <ToastPrimitives.Root
+      ref={ref}
+      className={cn(toastVariants({ variant }), className)}
+      {...props}
+    />
+  )
+})
+Toast.displayName = ToastPrimitives.Root.displayName
+
+const ToastAction = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Action>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Action>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Action
+    ref={ref}
+    className={cn(
+      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-muted/40 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive",
+      className
+    )}
+    {...props}
+  />
+))
+ToastAction.displayName = ToastPrimitives.Action.displayName
+
+const ToastClose = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Close>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Close>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Close
+    ref={ref}
+    className={cn(
+      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
+      className
+    )}
+    toast-close=""
+    {...props}
+  >
+    <X className="h-4 w-4" />
+  </ToastPrimitives.Close>
+))
+ToastClose.displayName = ToastPrimitives.Close.displayName
+
+const ToastTitle = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Title>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Title
+    ref={ref}
+    className={cn("text-sm font-semibold", className)}
+    {...props}
+  />
+))
+ToastTitle.displayName = ToastPrimitives.Title.displayName
+
+const ToastDescription = React.forwardRef<
+  React.ElementRef<typeof ToastPrimitives.Description>,
+  React.ComponentPropsWithoutRef<typeof ToastPrimitives.Description>
+>(({ className, ...props }, ref) => (
+  <ToastPrimitives.Description
+    ref={ref}
+    className={cn("text-sm opacity-90", className)}
+    {...props}
+  />
+))
+ToastDescription.displayName = ToastPrimitives.Description.displayName
+
+type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
+
+type ToastActionElement = React.ReactElement<typeof ToastAction>
+
+export {
+  type ToastProps,
+  type ToastActionElement,
+  ToastProvider,
+  ToastViewport,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  ToastClose,
+  ToastAction,
+}
+
+```
+
+# src/components/ui/textarea.tsx
+
+```tsx
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+export interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, ...props }, ref) => {
+    return (
+      <textarea
+        className={cn(
+          "flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Textarea.displayName = "Textarea"
+
+export { Textarea }
+
+```
+
+# src/components/ui/popover.tsx
+
+```tsx
+"use client"
+
+import * as React from "react"
+import * as PopoverPrimitive from "@radix-ui/react-popover"
+
+import { cn } from "@/lib/utils"
+
+const Popover = PopoverPrimitive.Root
+
+const PopoverTrigger = PopoverPrimitive.Trigger
+
+const PopoverContent = React.forwardRef<
+  React.ElementRef<typeof PopoverPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
+>(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+  <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Content
+      ref={ref}
+      align={align}
+      sideOffset={sideOffset}
+      className={cn(
+        "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        className
+      )}
+      {...props}
+    />
+  </PopoverPrimitive.Portal>
+))
+PopoverContent.displayName = PopoverPrimitive.Content.displayName
+
+export { Popover, PopoverTrigger, PopoverContent }
+
+```
+
 # src/components/ui/otp-button.tsx
 
 ```tsx
@@ -2335,6 +3953,20 @@ interface ImageClassifierProps {
   onClassification: (description: string, file: File) => void;
 }
 
+export const cleanResponse = (rawResponse: string) => {
+    return rawResponse
+      .replace(/^\d+:\s*/gm, "")
+      .replace(/\\n/g, "\n")
+      .replace(/"/g, "")
+      .replace(/(\w)-\s+(\w)/g, "$1$2")
+      .replace(/([a-zA-Z])([A-Z])/g, "$1 $2")
+      .replace(/(\w)([A-Z][a-z])/g, "$1 $2")
+      .replace(/\s+([.,!?;:])/g, "$1")
+      .replace(/\s\s+/g, " ")
+      .trim();
+  };
+
+
 export default function ImageClassifier({ onClassification }: ImageClassifierProps) {
   const [file, setFile] = useState<File | null>(null);
   const [image, setImage] = useState<string | null>(null);
@@ -2353,18 +3985,27 @@ export default function ImageClassifier({ onClassification }: ImageClassifierPro
         method: "POST",
         body: formData,
       });
-
-      const reader = res.body?.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let content = "";
-
-      while (true) {
-        const { done, value } = await reader!.read();
-        if (done) break;
-        content += decoder.decode(value, { stream: true });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
       }
+      
+      const responseText = await res.text();
 
-      const cleanedResponse = cleanResponse(content);
+      // const reader = res.body?.getReader();
+      // const decoder = new TextDecoder("utf-8");
+      // let content = "";
+
+      // while (true) {
+      //   const { done, value } = await reader!.read();
+      //   if (done) break;
+      //   content += decoder.decode(value, { stream: true });
+      // }
+
+      // const cleanedResponse = cleanResponse(content);
+
+      const cleanedResponse = responseText
+
       setResponse(cleanedResponse);
       onClassification(cleanedResponse, file as File);
     } catch (error) {
@@ -2372,19 +4013,8 @@ export default function ImageClassifier({ onClassification }: ImageClassifierPro
       setResponse("An error occurred while processing the image.");
     }
   };
-  const cleanResponse = (rawResponse: string) => {
-    return rawResponse
-      .replace(/^\d+:\s*/gm, "")
-      .replace(/\\n/g, "\n")
-      .replace(/"/g, "")
-      .replace(/(\w)-\s+(\w)/g, "$1$2")
-      .replace(/([a-zA-Z])([A-Z])/g, "$1 $2")
-      .replace(/(\w)([A-Z][a-z])/g, "$1 $2")
-      .replace(/\s+([.,!?;:])/g, "$1")
-      .replace(/\s\s+/g, " ")
-      .trim();
-  };
 
+  
   const onReset = () => {
     setFile(null);
     setImage(null);
@@ -2571,6 +4201,87 @@ export {
 
 ```
 
+# src/components/ui/connectWalletButton.tsx
+
+```tsx
+import { useState, useEffect } from "react";
+import { useSDK } from "@metamask/sdk-react";
+import { FaWallet } from "react-icons/fa6";
+import { Button } from "./button";
+import { formatAddress } from "@/lib/utils";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+
+export const ConnectWalletButton = () => {
+  const [account, setAccount] = useState<string | undefined>();
+  const { sdk, connected, connecting } = useSDK();
+
+  useEffect(() => {
+    const checkAccount = async () => {
+      if (connected) {
+        try {
+          const accounts = await sdk?.connect();
+          setAccount(accounts[0]);
+        } catch (err) {
+          console.error("Failed to get accounts", err);
+          setAccount(undefined);
+        }
+      } else {
+        setAccount(undefined);
+      }
+    };
+
+    checkAccount();
+  }, [sdk, connected]);
+
+  const connect = async () => {
+    try {
+      const accounts = await sdk?.connect();
+      setAccount(accounts?.[0]);
+    } catch (err) {
+      console.warn("failed to connect..", err);
+    }
+  };
+  
+  const disconnect = async () => {
+    try {
+      await sdk?.disconnect();
+      setAccount(undefined);
+    } catch (err) {
+      console.warn("failed to disconnect..", err);
+    }
+  };
+
+  return (
+    <div className="relative">
+      {connected && account ? (
+        <Popover>
+          <PopoverTrigger>
+            <Button>{formatAddress(account)}</Button>
+          </PopoverTrigger>
+          <PopoverContent className="mt-2 w-44 bg-gray-100 border rounded-md shadow-lg right-0 z-10 top-10">
+            <button
+              onClick={disconnect}
+              className="block w-full pl-2 pr-4 py-2 text-left text-[#F05252] hover:bg-gray-200"
+            >
+              Disconnect
+            </button>
+          </PopoverContent>
+        </Popover>
+      ) : (
+        <Button disabled={connecting} onClick={connect}>
+          <FaWallet className="mr-2 h-4 w-4" /> Connect Wallet
+        </Button>
+      )}
+    </div>
+  );
+};;
+
+```
+
 # src/components/ui/card.tsx
 
 ```tsx
@@ -2718,355 +4429,6 @@ export { Button, buttonVariants }
 
 ```
 
-# src/app/auth/default.tsx
-
-```tsx
-export default function AuthDefault() {
-    return null;
-}
-```
-
-# src/components/main/navbar.tsx
-
-```tsx
-'use client';
-
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { logout } from "@/server/actions/auth";
-import ConnectWallet from "./connectWallet";
-
-export function Navbar({ userName }: { userName: string | undefined }) {
-  const router = useRouter();
-
-  return (
-    <nav className="bg-background border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold">Criminal Scenes</span>
-            </div>
-          </div>
-          <div className="flex items-center">
-            {!userName ? (
-              <Button onClick={() => router.push('/auth/register')} className="mr-2">Login</Button>
-            ) : (
-              <>
-                <ConnectWallet />
-                <Button onClick={() => logout()} className="ml-2">Logout</Button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
-}
-
-```
-
-# src/components/main/landing.tsx
-
-```tsx
-'use client';
-
-import { useState, useEffect } from "react";
-import { getScenes } from "@/server/actions/scene";
-import { AddSceneDialog } from "./addSceneDialog";
-import Link from 'next/link';
-
-interface Scene {
-  id: string;
-  title: string;
-  description: string | null;
-  imageUrl: string | null;
-  date: string | null;
-  userId: string;
-  createdAt: Date | null;
-}
-
-export function Landing({ userName }: { userName: string | undefined }) {
-  const [scenes, setScenes] = useState<Scene[]>([]);
-  const [selectedScene, setSelectedScene] = useState<Scene | null>(null);
-
-  const fetchScenes = async () => {
-    try {
-      const fetchedScenes = await getScenes();
-      setScenes(fetchedScenes);
-    } catch (error) {
-      console.error("Error fetching scenes:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchScenes();
-  }, []);
-
-  if (!userName) {
-    return (
-      <main className="flex flex-col justify-center items-center min-h-screen">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Scene Creator</h1>
-        <p className="text-xl">Please log in to start creating scenes.</p>
-      </main>
-    );
-  }
-
-  return (
-    <main className="flex flex-col items-center min-h-screen">
-      <div className="w-full max-w-6xl px-4 py-8 flex flex-col items-center justify-center">
-        <div className="mb-8">
-          <AddSceneDialog onSceneAdded={fetchScenes} />
-        </div>
-        <h2 className="text-3xl font-bold mb-6">Your Scenes</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {scenes.map((scene) => (
-            <Link href={`/scene/${scene.id}`} key={scene.id}>
-              <div className="border rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform duration-200 ease-in-out hover:scale-105">
-                {scene.imageUrl && (
-                  <img src={scene.imageUrl} alt={scene.title} className="w-full h-48 object-cover" />
-                )}
-                <div className="p-4 bg-[#2C3755]">
-                  <h3 className="text-xl font-semibold mb-2">{scene.title}</h3>
-                  {scene.description && (
-                    <p className=" mb-2 line-clamp-2">{scene.description}</p>
-                  )}
-                  {scene.date && (
-                    <p className="text-sm ">Date: {new Date(scene.date).toLocaleDateString()}</p>
-                  )}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </main>
-  );
-}
-
-```
-
-# src/components/main/connectWallet.tsx
-
-```tsx
-'use client';
-
-import { useEffect, useState } from "react";
-import { useWallet, WalletButton, useWalletModal } from "@vechain/dapp-kit-react";
-import { Button } from "@/components/ui/button";
-import { FaWallet } from "react-icons/fa6";
-
-// You might need to create this utility function
-const humanAddress = (address: string, lengthBefore = 4, lengthAfter = 10) => {
-  const before = address.substring(0, lengthBefore)
-  const after = address.substring(address.length - lengthAfter)
-  return `${before}…${after}`
-}
-
-export const ConnectWallet = () => {
-  const { account } = useWallet();
-  const { open } = useWalletModal();
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) {
-    return null; // or a loading placeholder
-  }
-
-  if (!account) {
-    return (
-      <Button
-        onClick={open}
-        className="bg-primary text-primary-foreground hover:bg-primary/90"
-      >
-        <FaWallet className="mr-2 h-4 w-4" /> Connect Wallet
-      </Button>
-    );
-  }
-
-  return (
-    <Button
-      onClick={open}
-      className="rounded-full bg-[rgba(235,236,252,1)] text-black hover:bg-[rgba(235,236,252,0.8)]"
-    >
-      {/* You might want to replace this with an actual icon component */}
-      <div className="mr-2 h-4 w-4 rounded-full bg-gray-300"></div>
-      <span className="font-normal">{humanAddress(account, 4, 6)}</span>
-    </Button>
-  );
-};
-
-export default ConnectWallet;
-
-```
-
-# src/components/main/addSceneDialog.tsx
-
-```tsx
-import React, { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { createScene } from "@/server/actions/scene";
-
-export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [image, setImage] = useState<string | null>(null);
-  const [description, setDescription] = useState("");
-  const [classifying, setClassifying] = useState(false);
-  const [open, setOpen] = useState(false);
-  const router = useRouter();
-
-  const cleanResponse = (rawResponse: string) => {
-    return rawResponse
-      .replace(/^\d+:\s*/gm, "")
-      .replace(/\\n/g, "\n")
-      .replace(/"/g, "")
-      .replace(/(\w)-\s+(\w)/g, "$1$2")
-      .replace(/([a-zA-Z])([A-Z])/g, "$1 $2")
-      .replace(/(\w)([A-Z][a-z])/g, "$1 $2")
-      .replace(/\s+([.,!?;:])/g, "$1")
-      .replace(/\s\s+/g, " ")
-      .trim();
-  };
-
-  const classifyImage = async () => {
-    if (!file) return;
-    setClassifying(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    try {
-      const response = await fetch("/api/classify", {
-        method: "POST",
-        body: formData,
-      });
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let content = "";
-      
-      function processText({ done, value }: ReadableStreamReadResult<Uint8Array>): Promise<void> | void {
-        if (done) {
-          setDescription(cleanResponse(content));
-          setClassifying(false);
-          return;
-        }
-        content += decoder.decode(value, { stream: true });
-        return reader?.read().then(processText);
-      }
-      
-      await reader?.read().then(processText);
-    } catch (error) {
-      console.error("Error classifying image:", error);
-      setClassifying(false);
-    }
-  };
-
-  const handleSceneSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!title || !file || !date || !description) return;
-    
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('description', description);
-    formData.append('date', date);
-    formData.append('file', file);
-    
-    try {
-      const newScene = await createScene(formData);
-      setTitle("");
-      setDate("");
-      setFile(null);
-      setImage(null);
-      setDescription("");
-      setOpen(false);
-      onSceneAdded();
-      
-      // Navigate to the new scene page
-      router.push(`/scene/${newScene.id}`);
-    } catch (error) {
-      console.error("Error creating scene:", error);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className='text-2xl p-8 rounded-lg'>Submit Scene Evidence</Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Submit Scene Evidence</DialogTitle>
-          <DialogDescription>
-            Upload an image and fill out the details to create a new scene.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSceneSubmit} className="grid gap-4 py-4">
-          <Input
-            type="text"
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-          <Input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const files = e.target.files;
-              if (files?.length) {
-                setFile(files[0]);
-                setImage(URL.createObjectURL(files[0]));
-                setDescription(""); // Reset description when new image is uploaded
-              } else {
-                setFile(null);
-                setImage(null);
-                setDescription("");
-              }
-            }}
-            className='block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400'
-            required
-          />
-          {image && (
-            <img
-              src={image}
-              alt="Uploaded scene"
-              className="mb-4 max-w-full h-auto"
-            />
-          )}
-          {file && !description && (
-            <Button type="button" onClick={classifyImage} disabled={classifying}>
-              {classifying ? "Classifying..." : "Classify Image"}
-            </Button>
-          )}
-          {description && (
-            <div className='max-h-[15rem] overflow-auto'>
-              <h3 className="font-semibold mb-2">Image Description:</h3>
-              <p>{description}</p>
-            </div>
-          )}
-          <Button type="submit" disabled={!title || !file || !date || !description}>
-            Create Scene
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-```
-
 # src/app/scene/[sceneId]/page.tsx
 
 ```tsx
@@ -3113,6 +4475,84 @@ export default async function SceneDetail({ params }: { params: { sceneId: strin
   );
 }
 
+```
+
+# src/app/api/send-reward/route.ts
+
+```ts
+import { NextResponse } from 'next/server';
+import { sendRewardTransaction } from '@/server/actions/reward';
+
+export async function POST(req: Request) {
+  try {
+    const { recipientAddress } = await req.json();
+    if (!recipientAddress) {
+      return NextResponse.json({ error: 'Recipient address is required' }, { status: 400 });
+    }
+    const txid = await sendRewardTransaction(recipientAddress);
+    return NextResponse.json({ txid });
+  } catch (error) {
+    console.error('Error in send-reward API route:', error);
+    if (error instanceof Error) {
+      return NextResponse.json({ error: 'Failed to send reward', details: error.message }, { status: 500 });
+    } else {
+      return NextResponse.json({ error: 'Failed to send reward', details: 'Unknown error' }, { status: 500 });
+    }
+  }
+}
+
+```
+
+# src/app/api/classify/route.ts
+
+```ts
+import { classifyImage } from "@/lib/classifier";
+
+    import { NextResponse, NextRequest } from "next/server";
+
+    import { StreamingTextResponse } from "ai";
+
+
+
+    // Set the runtime to edge for best performance
+
+    export const runtime = "edge";
+
+
+
+    // add a listener to POST requests
+
+    export async function POST(request: NextRequest) {
+
+      // read our file from request data
+
+      const data = await request.formData();
+
+      const file: File | null = data.get("file") as unknown as File;
+
+
+
+      if (!file) {
+
+        return NextResponse.json(
+
+          { message: "File not present in body" },
+
+          { status: 400, statusText: "Bad Request" }
+
+        );
+
+      }
+
+
+
+      //call our classify function and stream to the client
+
+      const response = await classifyImage(file);
+
+      return new StreamingTextResponse(response);
+
+}
 ```
 
 # src/app/auth/register/registerForm.tsx
@@ -3167,40 +4607,7 @@ export default function RegisterForm() {
         return () => subscription.unsubscribe();
     }, []);
 
-    const handleSubmit = async () => {
-        const res = await register(email, password);
-        setMessage(res || ''); 
-        if (res) {
-            toast.error(res, {
-                duration: 4000, 
-                position: 'bottom-right', 
-                style: {
-                    border: '2px solid #333',
-                    color: '#fff',
-                    backgroundColor: '#333',
-                },
-            });
-        } else {
-            console.log("registered successfully")
-            toast.success('Registered successfully', {
-                duration: 4000, 
-                position: 'bottom-right', 
-                style: {
-                    border: '2px solid #333',
-                    color: '#fff',
-                    backgroundColor: '#333',
-                }, 
-            });
-            router.push('/connect-wallet');
-        }
-    }
-
-    if (user && !veChainAddress) {
-        router.push('/connect-wallet');
-        return null;
-    }
-
-    return (
+        return (
         <Card className="flex flex-col bg-background mx-auto border-none max-w-sm">
             <CardHeader>
                 <CardTitle className="text-2xl text-center"></CardTitle>
@@ -3586,55 +4993,42 @@ export async function GET(request: Request) {
 }
 ```
 
-# src/app/api/classify/route.ts
+# src/app/api/compare/route.ts
 
 ```ts
-import { classifyImage } from "@/lib/classifier";
+import { compareScenes } from "@/lib/comparison";
+import { NextResponse, NextRequest } from "next/server";
+import { StreamingTextResponse } from "ai";
 
-    import { NextResponse, NextRequest } from "next/server";
+// Set the runtime to edge for best performance
+export const runtime = "edge";
 
-    import { StreamingTextResponse } from "ai";
+// Add a listener to POST requests
+export async function POST(request: NextRequest) {
+  try {
+    // Parse the JSON body
+    const body = await request.json();
+    const descriptions: string[] | null = body.descriptions;
 
+    if (!descriptions || !Array.isArray(descriptions)) {
+      return NextResponse.json(
+        { message: "Invalid or missing descriptions in request body" },
+        { status: 400, statusText: "Bad Request" }
+      );
+    }
 
+    // Call our compare function and stream to the client
+    const response = await compareScenes(descriptions);
 
-    // Set the runtime to edge for best performance
-
-    export const runtime = "edge";
-
-
-
-    // add a listener to POST requests
-
-    export async function POST(request: NextRequest) {
-
-      // read our file from request data
-
-      const data = await request.formData();
-
-      const file: File | null = data.get("file") as unknown as File;
-
-
-
-      if (!file) {
-
-        return NextResponse.json(
-
-          { message: "File not present in body" },
-
-          { status: 400, statusText: "Bad Request" }
-
-        );
-
-      }
-
-
-
-      //call our classify function and stream to the client
-
-      const response = await classifyImage(file);
-
-      return new StreamingTextResponse(response);
-
+    return new NextResponse(response)
+  } catch (error) {
+    console.error("Error processing request:", error);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500, statusText: "Internal Server Error" }
+    );
+  }
 }
+
 ```
 

@@ -6,12 +6,34 @@ import { AddSceneDialog } from "./addSceneDialog";
 import { ResultDisplay } from "./resultDisplay";
 import Link from 'next/link';
 import { Scene } from "@/server/db/types";
+import { useSDK } from "@metamask/sdk-react";
 
 export function Landing({ userName }: { userName: string | undefined }) {
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [selectedScenes, setSelectedScenes] = useState<Scene[]>([]);
   const [comparisonResult, setComparisonResult] = useState<string | null>(null);
   const [isCompareMode, setIsCompareMode] = useState(false);
+
+  const [account, setAccount] = useState<string | undefined>();
+  const { sdk, connected, connecting } = useSDK();
+
+  useEffect(() => {
+    const checkAccount = async () => {
+      if (connected) {
+        try {
+          const accounts = await sdk?.connect();
+          setAccount(accounts[0]);
+        } catch (err) {
+          console.error("Failed to get accounts", err);
+          setAccount(undefined);
+        }
+      } else {
+        setAccount(undefined);
+      }
+    };
+
+    checkAccount();
+  }, [sdk, connected]);
 
   const fetchScenes = async () => {
     try {
@@ -84,7 +106,7 @@ export function Landing({ userName }: { userName: string | undefined }) {
               <img src="/templogo.jpg" alt="Temporary Logo" className="w-32 h-32 object-contain mb-4" />
             </div>
             <div className="mb-8">
-              <AddSceneDialog onSceneAdded={fetchScenes} />
+              <AddSceneDialog onSceneAdded={fetchScenes} account={account} />
             </div>
             <h2 className="text-3xl font-bold mb-6">Your Scenes</h2>
             <div className="mb-4 flex space-x-4">

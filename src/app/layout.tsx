@@ -3,13 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import dynamic from 'next/dynamic';
 import { Toaster } from "@/components/ui/toaster"
+import MetaMaskProviderWrapper from "./MetaMaskProvidorWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
-
-const DAppKitProviderWrapper = dynamic(
-  () => import('./DAppKitProviderWrapper'),
-  { ssr: false }
-);
 
 export default function RootLayout({
   children,
@@ -19,10 +15,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`dark ${inter.className}`}>
-        <DAppKitProviderWrapper>
+        <MetaMaskProviderWrapper >
           {children}
         <Toaster />
-        </DAppKitProviderWrapper>
+        </MetaMaskProviderWrapper>
       </body>
     </html>
   );

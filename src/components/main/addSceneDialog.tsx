@@ -1,4 +1,6 @@
-import React, { useState, FormEvent } from 'react';
+"use client"
+
+import React, { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,12 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { createScene } from "@/server/actions/scene";
-import { useWallet } from "@vechain/dapp-kit-react";
+import { useSDK } from "@metamask/sdk-react";
 import { Loader2 } from "lucide-react";
 import { useSendRewardTransaction } from '@/app/hooks/useSendRewardTransaction';
+import { Eip1193Provider, ethers } from 'ethers';
+
+const REWARD_AMOUNT = '0.01';
 
 
-export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
+export function AddSceneDialog({ onSceneAdded, account }: { onSceneAdded: () => void, account?: string }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -21,9 +26,10 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const { account } = useWallet();
+  const { sdk, connected } = useSDK();
   const { toast } = useToast();
   const { sendReward, isLoading: isRewardLoading, error: rewardError } = useSendRewardTransaction();
+  const [isRewardSent, setIsRewardSent] = useState(false);
 
 
   const classifyImage = async () => {
@@ -75,13 +81,15 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
       .trim();
   };
 
-  const handleSceneSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    const handleSceneSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+
     if (!title || !file || !date || !description) return;
     if (!account) {
       toast({
         title: "Wallet Not Connected",
-        description: "Please connect your wallet to receive a reward.",
+        description: "Please connect your MetaMask wallet to receive a reward.",
         variant: "destructive",
       });
       return;
@@ -98,10 +106,26 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
       // Create the scene
       const newScene = await createScene(formData);
 
-      // Send reward transaction
-      // console.log("Sending reward transaction to account:", account);
-      // const txId = await sendReward(account);
+      // Get the user's Ethereum address
+      
+      const userAddress = account;
 
+      console.log(`Sending reward to ${userAddress}`);
+
+      const response = await fetch('/api/send-reward', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ recipientAddress: userAddress }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send reward');
+      }
+
+      const { txHash } = await response.json();
+      
       setTitle("");
       setDate("");
       setFile(null);
@@ -112,20 +136,21 @@ export function AddSceneDialog({ onSceneAdded }: { onSceneAdded: () => void }) {
 
       toast({
         title: "Scene Submitted",
-        description: `Your scene has been submitted successfully!`,
+        description: `Your scene has been submitted successfully and reward transaction sent! Hash: ${txHash}`,
       });
       router.push(`/scene/${newScene.id}`);
     } catch (error) {
       console.error("Error in scene submission or reward:", error);
       toast({
         title: "Submission Error",
-        description: rewardError || "Failed to create the scene or send reward. Please try again.",
+        description: "Failed to create the scene or send reward. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
+  
   
 
   return (

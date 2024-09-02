@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { sendRewardTransaction } from '@/server/actions/reward';
+import { sendReward } from '@/utils/rewardWallet';
 
 export async function POST(req: Request) {
   try {
@@ -7,14 +7,17 @@ export async function POST(req: Request) {
     if (!recipientAddress) {
       return NextResponse.json({ error: 'Recipient address is required' }, { status: 400 });
     }
-    const txid = await sendRewardTransaction(recipientAddress);
-    return NextResponse.json({ txid });
+
+    console.log(`from api route Sending reward to ${recipientAddress}`);
+    const REWARD_AMOUNT = '0.0001'; // Define reward amount in ETH
+    const txHash = await sendReward(recipientAddress, REWARD_AMOUNT);
+
+    return NextResponse.json({ txHash });
   } catch (error) {
-    console.error('Error in send-reward API route:', error);
+    console.error('Error in reward API:', error);
     if (error instanceof Error) {
-      return NextResponse.json({ error: 'Failed to send reward', details: error.message }, { status: 500 });
-    } else {
-      return NextResponse.json({ error: 'Failed to send reward', details: 'Unknown error' }, { status: 500 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
+    return NextResponse.json({ error: 'An unknown error occurred' }, { status: 500 });
   }
 }
