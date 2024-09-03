@@ -44,7 +44,8 @@ export function Landing({ userName }: { userName: string | undefined }) {
       await Promise.all(fetchedScenes.map(scene => new Promise<void>(async (resolve, reject) => {
       
         const calculatedImageHash = await getImageHashFromUrl(scene.imageUrl!);
-        // console.log('url hash', calculatedImageHash)
+        console.log('url hash', calculatedImageHash)
+        console.log('image hash', scene.imageHash)
         
       })))
       
