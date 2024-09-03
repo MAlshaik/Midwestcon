@@ -103,14 +103,14 @@ export function Landing({ userName }: { userName: string | undefined }) {
         ) : (
           <>
             <div className="mb-8">
-              <img src="/templogoglow.png" alt="Temporary Logo" className="w-32 h-32 object-contain mb-4" />
-              <img src="/midshieldwords.png" alt="Midshield words" className="w-32 h-32 object-contain mb-4" />
+              <img src="/templogoglow.png" alt="Temporary Logo" className="w-30 h-30 object-contain mb-2" />
+              <img src="/midshieldwords.png" alt="Midshield words" className="w-50 h-50 object-contain mb-2" />
             </div>
-            <div className="mb-8">
+            <div className="mb-20">
               <AddSceneDialog onSceneAdded={fetchScenes} account={account} />
             </div>
             <h2 className="text-3xl font-bold mb-6">Your Scenes</h2>
-            <div className="mb-4 flex space-x-4">
+            <div className="mb-6 flex space-x-4">
               {!isCompareMode && (
                 <button 
                   onClick={() => setIsCompareMode(true)}
