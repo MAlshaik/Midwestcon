@@ -94,13 +94,15 @@ export function AddSceneDialog({ onSceneAdded, account }: { onSceneAdded: () => 
       });
       return;
     }
-
+    
     setIsSubmitting(true);
     const formData = new FormData();
     formData.append('title', title);
     formData.append('description', description);
     formData.append('date', date);
     formData.append('file', file);
+    const imageHash = await calculateImageHash(file)
+    formData.append('imageHash', imageHash);
 
     try {
       // Create the scene
@@ -187,10 +189,6 @@ export function AddSceneDialog({ onSceneAdded, account }: { onSceneAdded: () => 
               if (files?.length) {
                 setFile(files[0]);
                 setImage(URL.createObjectURL(files[0]));
-
-                const hash = await calculateImageHash(files[0])
-                // console.log('upload hash', hash);
-
                 setDescription(""); // Reset description when new image is uploaded
               } else {
                 setFile(null);

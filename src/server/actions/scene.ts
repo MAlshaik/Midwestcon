@@ -6,6 +6,7 @@ import { scenes } from '@/server/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { Scene } from '../db/types';
+import { calculateImageHash } from '@/utils/imagehash';
 
 
 export async function createScene(formData: FormData) {
@@ -14,6 +15,7 @@ export async function createScene(formData: FormData) {
   const description = formData.get('description') as string;
   const dateStr = formData.get('date') as string;
   const file = formData.get('file') as File;
+  const imageHash = formData.get('imageHash') as string;
 
   if (!title || !file) {
     throw new Error('Title and file are required');
@@ -52,6 +54,7 @@ export async function createScene(formData: FormData) {
       title,
       description,
       imageUrl: publicUrl,
+      imageHash,
       userId: user.id,
       date: sql`${formattedDate}::date`,
     }).returning();

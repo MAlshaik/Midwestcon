@@ -45,6 +45,7 @@ export function Landing({ userName }: { userName: string | undefined }) {
       
         const calculatedImageHash = await getImageHashFromUrl(scene.imageUrl!);
         console.log('url hash', calculatedImageHash)
+        console.log('image hash', scene.imageHash)
         
       })))
       
