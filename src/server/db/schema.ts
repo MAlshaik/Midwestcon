@@ -40,11 +40,11 @@ export const scenes = createTable("scenes", {
   title: text("title").notNull(),
   description: text("description"),
   imageUrl: text("image_url"),
+  imageHash: text("image_hash"),
   createdAt: timestamp("created_at").defaultNow(),
   date: date("date"),
   rewardPending: boolean("reward_pending").default(false),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-
 });
 
 export const sceneRelations = relations(scenes, ({ one }) => ({

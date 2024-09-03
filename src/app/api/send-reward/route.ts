@@ -11,6 +11,7 @@ export async function POST(req: Request) {
     console.log(`from api route Sending reward to ${recipientAddress}`);
     const REWARD_AMOUNT = '0.0001'; // Define reward amount in ETH
     const txHash = await sendReward(recipientAddress, REWARD_AMOUNT);
+    console.log('sent reward')
 
     return NextResponse.json({ txHash });
   } catch (error) {
