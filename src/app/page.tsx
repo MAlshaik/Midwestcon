@@ -12,9 +12,11 @@ export default async function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar userName={userName} />
+      <div className="ml-60"> {/* This adds a left margin to move the ExampleComponent to the right */}
+        <ExampleComponent />
+      </div>
       <div className="flex-grow">
         <Landing userName={userName} />
-        <ExampleComponent />
       </div>
     </div>
   );
