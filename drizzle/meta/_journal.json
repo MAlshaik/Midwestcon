@@ -43,6 +43,13 @@
       "when": 1724812762977,
       "tag": "0005_dizzy_arachne",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1725333855335,
+      "tag": "0006_hot_shotgun",
+      "breakpoints": true
     }
   ]
 }

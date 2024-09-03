@@ -12,6 +12,7 @@ import { useSDK } from "@metamask/sdk-react";
 import { Loader2 } from "lucide-react";
 import { useSendRewardTransaction } from '@/app/hooks/useSendRewardTransaction';
 import { Eip1193Provider, ethers } from 'ethers';
+import { calculateImageHash } from '@/utils/imagehash';
 
 const REWARD_AMOUNT = '0.01';
 
@@ -81,9 +82,8 @@ export function AddSceneDialog({ onSceneAdded, account }: { onSceneAdded: () => 
       .trim();
   };
 
-    const handleSceneSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSceneSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
 
     if (!title || !file || !date || !description) return;
     if (!account) {
@@ -107,7 +107,7 @@ export function AddSceneDialog({ onSceneAdded, account }: { onSceneAdded: () => 
       const newScene = await createScene(formData);
 
       // Get the user's Ethereum address
-      
+
       const userAddress = account;
 
       console.log(`Sending reward to ${userAddress}`);
@@ -125,7 +125,7 @@ export function AddSceneDialog({ onSceneAdded, account }: { onSceneAdded: () => 
       }
 
       const { txHash } = await response.json();
-      
+
       setTitle("");
       setDate("");
       setFile(null);
@@ -150,8 +150,8 @@ export function AddSceneDialog({ onSceneAdded, account }: { onSceneAdded: () => 
       setIsSubmitting(false);
     }
   };
-  
-  
+
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -182,11 +182,15 @@ export function AddSceneDialog({ onSceneAdded, account }: { onSceneAdded: () => 
           <Input
             type="file"
             accept="image/*"
-            onChange={(e) => {
+            onChange={async (e) => {
               const files = e.target.files;
               if (files?.length) {
                 setFile(files[0]);
                 setImage(URL.createObjectURL(files[0]));
+
+                const hash = await calculateImageHash(files[0])
+                // console.log('upload hash', hash);
+
                 setDescription(""); // Reset description when new image is uploaded
               } else {
                 setFile(null);

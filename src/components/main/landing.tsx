@@ -7,6 +7,7 @@ import { ResultDisplay } from "./resultDisplay";
 import Link from 'next/link';
 import { Scene } from "@/server/db/types";
 import { useSDK } from "@metamask/sdk-react";
+import { getImageHashFromUrl } from "@/utils/imagehash";
 
 export function Landing({ userName }: { userName: string | undefined }) {
   const [scenes, setScenes] = useState<Scene[]>([]);
@@ -15,7 +16,7 @@ export function Landing({ userName }: { userName: string | undefined }) {
   const [isCompareMode, setIsCompareMode] = useState(false);
 
   const [account, setAccount] = useState<string | undefined>();
-  const { sdk, connected, connecting } = useSDK();
+  const {sdk, connected, connecting } = useSDK();
 
   useEffect(() => {
     const checkAccount = async () => {
@@ -39,9 +40,20 @@ export function Landing({ userName }: { userName: string | undefined }) {
     try {
       const fetchedScenes = await getScenes();
       setScenes(fetchedScenes);
+      
+      await Promise.all(fetchedScenes.map(scene => new Promise<void>(async (resolve, reject) => {
+      
+        const calculatedImageHash = await getImageHashFromUrl(scene.imageUrl!);
+        // console.log('url hash', calculatedImageHash)
+        
+      })))
+      
+      console.log('fetchScenes');
+
     } catch (error) {
       console.error("Error fetching scenes:", error);
     }
+
   };
 
   useEffect(() => {
