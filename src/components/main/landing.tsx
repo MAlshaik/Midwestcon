@@ -103,7 +103,8 @@ export function Landing({ userName }: { userName: string | undefined }) {
         ) : (
           <>
             <div className="mb-8">
-              <img src="/templogo.jpg" alt="Temporary Logo" className="w-32 h-32 object-contain mb-4" />
+              <img src="/templogoglow.png" alt="Temporary Logo" className="w-32 h-32 object-contain mb-4" />
+              <img src="/midshieldwords.png" alt="Midshield words" className="w-32 h-32 object-contain mb-4" />
             </div>
             <div className="mb-8">
               <AddSceneDialog onSceneAdded={fetchScenes} account={account} />
