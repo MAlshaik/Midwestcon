@@ -26,10 +26,12 @@ export function Navbar({ userName }: { userName: string | undefined }) {
   return (
     <nav className="bg-background border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-18">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold">Criminal Scenes</span>
+            <img src="/templogoglow.png" alt="Temporary Logo" className="w-20 h-20 object-contain mb-2" />
+              {/* <span className="text-xl font-bold">Criminal Scenes</span> */}
+              <img src="/midshieldwords.png" alt="Midshield words" className="w-32 h-32 object-contain mb-2" />
             </div>
           </div>
           <div className="flex items-center">

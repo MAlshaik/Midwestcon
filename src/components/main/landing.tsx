@@ -44,7 +44,7 @@ export function Landing({ userName }: { userName: string | undefined }) {
       await Promise.all(fetchedScenes.map(scene => new Promise<void>(async (resolve, reject) => {
       
         const calculatedImageHash = await getImageHashFromUrl(scene.imageUrl!);
-        // console.log('url hash', calculatedImageHash)
+        console.log('url hash', calculatedImageHash)
         
       })))
       
@@ -109,12 +109,12 @@ export function Landing({ userName }: { userName: string | undefined }) {
 
   return (
     <main className="flex flex-col items-center min-h-screen">
-      <div className="w-full max-w-6xl px-4 py-8 flex flex-col items-center justify-center">
+      <div className="w-full max-w-6xl px-4 py-1 flex flex-col items-center justify-center">
         {comparisonResult ? (
           <ResultDisplay result={comparisonResult} onBack={handleBackToLanding} />
         ) : (
           <>
-            <div className="mb-8">
+            <div className="mb-2">
               <img src="/templogoglow.png" alt="Temporary Logo" className="w-30 h-30 object-contain mb-2" />
               <img src="/midshieldwords.png" alt="Midshield words" className="w-50 h-50 object-contain mb-2" />
             </div>
