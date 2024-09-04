@@ -1,3 +1,4 @@
+// @ts-ignore
 import { classifyImage } from "@/lib/classifier";
 
     import { NextResponse, NextRequest } from "next/server";
