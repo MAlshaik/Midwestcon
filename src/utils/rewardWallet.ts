@@ -8,7 +8,7 @@ if (!REWARD_WALLET_PRIVATE_KEY || !INFURA_PROJECT_ID) {
   throw new Error('Missing required environment variables for reward wallet');
 }
 
-const provider = new ethers.JsonRpcProvider(`https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`);
+const provider = new ethers.JsonRpcProvider(`https://arbitrum-sepolia.infura.io/v3/${INFURA_PROJECT_ID}`);
 const wallet = new ethers.Wallet(REWARD_WALLET_PRIVATE_KEY, provider);
 
 export async function sendReward(recipientAddress: string, amount: string) {

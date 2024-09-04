@@ -31,6 +31,7 @@ export async function GET(request: Request) {
     )
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      console.log('redirecting to', origin, origin)
       return NextResponse.redirect(`${origin}${next}`)
     }
   }

@@ -83,75 +83,94 @@ export function AddSceneDialog({ onSceneAdded, account }: { onSceneAdded: () => 
   };
 
   const handleSceneSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  e.preventDefault();
+  if (!title || !file || !date || !description) return;
+  if (!account) {
+    toast({
+      title: "Wallet Not Connected",
+      description: "Please connect your MetaMask wallet to receive a reward.",
+      variant: "destructive",
+    });
+    return;
+  }
+  
+  setIsSubmitting(true);
+  const formData = new FormData();
+  formData.append('title', title);
+  formData.append('description', description);
+  formData.append('date', date);
+  formData.append('file', file);
+  const imageHash = await calculateImageHash(file);
+  formData.append('imageHash', imageHash);
 
-    if (!title || !file || !date || !description) return;
-    if (!account) {
-      toast({
-        title: "Wallet Not Connected",
-        description: "Please connect your MetaMask wallet to receive a reward.",
-        variant: "destructive",
-      });
-      return;
-    }
+  try {
+    // Create the scene
+    const newScene = await createScene(formData);
     
-    setIsSubmitting(true);
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('description', description);
-    formData.append('date', date);
-    formData.append('file', file);
-    const imageHash = await calculateImageHash(file)
-    formData.append('imageHash', imageHash);
+    // Get the user's Ethereum address
+    const userAddress = account;
+    console.log(`Sending reward to ${userAddress}`);
+    
+    const response = await fetch('/api/send-reward', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ recipientAddress: userAddress }),
+    });
 
-    try {
-      // Create the scene
-      const newScene = await createScene(formData);
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
-      // Get the user's Ethereum address
+    const responseText = await response.text();
+    console.log('Response text:', responseText);
 
-      const userAddress = account;
-
-      console.log(`Sending reward to ${userAddress}`);
-
-      const response = await fetch('/api/send-reward', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ recipientAddress: userAddress }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send reward');
+    let responseData;
+    if (responseText.trim()) {
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Error parsing JSON:', parseError);
+        throw new Error('Invalid JSON response from server');
       }
-
-      const { txHash } = await response.json();
-
-      setTitle("");
-      setDate("");
-      setFile(null);
-      setImage(null);
-      setDescription("");
-      setOpen(false);
-      onSceneAdded();
-
-      toast({
-        title: "Scene Submitted",
-        description: `Your scene has been submitted successfully and reward transaction sent! Hash: ${txHash}`,
-      });
-      router.push(`/scene/${newScene.id}`);
-    } catch (error) {
-      console.error("Error in scene submission or reward:", error);
-      toast({
-        title: "Submission Error",
-        description: "Failed to create the scene or send reward. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      console.warn('Empty response from server');
+      responseData = {};
     }
-  };
+
+    if (!response.ok) {
+      throw new Error(responseData.message || 'Failed to send reward');
+    }
+
+    const txHash = responseData.txHash || 'Transaction hash not provided';
+
+    // Reset form fields
+    setTitle("");
+    setDate("");
+    setFile(null);
+    setImage(null);
+    setDescription("");
+    setOpen(false);
+    onSceneAdded();
+
+    toast({
+      title: "Scene Submitted",
+      description: `Your scene has been submitted successfully. Reward transaction: ${txHash}`,
+    });
+
+    router.push(`/scene/${newScene.id}`);
+  } catch (error) {
+    console.error("Error in scene submission or reward:", error);
+    toast({
+      title: "Submission Error",
+      description: `Failed to create the scene or send reward. Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      variant: "destructive",
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+  
 
 
 
